@@ -4,9 +4,9 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./Errors.sol";
+import "./utils/Errors.sol";
 
-contract Register is Errors, AccessManaged {
+contract SignersRegister is Errors, AccessManaged {
     using ECDSA for bytes32;
 
     mapping(address => bool) private _signers;

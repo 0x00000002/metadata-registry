@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import "./DynamicMetadata.sol";
-import "./Errors.sol";
+import "../DynamicMetadata.sol";
+import "../utils/Errors.sol";
 
 /**
  * @dev Futureverse Swappable - An example of ERC721 IMintable contract

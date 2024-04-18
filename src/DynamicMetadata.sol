@@ -4,15 +4,15 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./Errors.sol";
-import "./Register.sol";
+import "./utils/Errors.sol";
+import "./SignersRegister.sol";
 import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
 contract DynamicMetadata is Errors, IERC7160, AccessManaged {
     using ECDSA for bytes32;
 
-    Register private _register;
+    SignersRegister private _register;
 
     constructor(address manager_) AccessManaged(manager_) {}
 
@@ -63,4 +63,9 @@ contract DynamicMetadata is Errors, IERC7160, AccessManaged {
     function hasPinnedTokenURI(
         uint256 tokenId
     ) external view returns (bool pinned) {}
+
+    function updateRegister(address addr) external restricted {
+        if (addr == address(0)) revert InvalidInput(INVALID_ADDRESS);
+        _register = new SignersRegister(addr);
+    }
 }
