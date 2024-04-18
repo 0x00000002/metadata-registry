@@ -9,12 +9,14 @@ import "./SignersRegister.sol";
 import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
-contract DynamicMetadata is Errors, IERC7160, AccessManaged {
+contract MultipleURIs is Errors, IERC7160 {
     using ECDSA for bytes32;
 
     SignersRegister private _register;
 
-    constructor(address manager_) AccessManaged(manager_) {}
+    constructor(address register) {
+        _register = SignersRegister(register);
+    }
 
     function supportsInterface(
         bytes4 interfaceId
@@ -63,9 +65,4 @@ contract DynamicMetadata is Errors, IERC7160, AccessManaged {
     function hasPinnedTokenURI(
         uint256 tokenId
     ) external view returns (bool pinned) {}
-
-    function updateRegister(address addr) external restricted {
-        if (addr == address(0)) revert InvalidInput(INVALID_ADDRESS);
-        _register = new SignersRegister(addr);
-    }
 }

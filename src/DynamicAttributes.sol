@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./utils/Errors.sol";
 import "./SignersRegister.sol";
+import "./MultipleURIs.sol";
 
 contract DynamicAttributes is Errors, AccessManaged {
     using ECDSA for bytes32;
@@ -26,7 +27,9 @@ contract DynamicAttributes is Errors, AccessManaged {
         uint256 value
     );
 
-    constructor(address manager_) AccessManaged(manager_) {}
+    constructor(address manager_, address register_) AccessManaged(manager_) {
+        _register = SignersRegister(register_);
+    }
 
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.
@@ -77,10 +80,5 @@ contract DynamicAttributes is Errors, AccessManaged {
             tokenAttributes[tokenId][uri] = value;
             emit AttributeSet(tokenId, uri, value);
         }
-    }
-
-    function updateRegister(address addr) external restricted {
-        if (addr == address(0)) revert InvalidInput(INVALID_ADDRESS);
-        _register = new SignersRegister(addr);
     }
 }

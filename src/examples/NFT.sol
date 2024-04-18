@@ -6,25 +6,31 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import "../DynamicMetadata.sol";
+import "../MultipleURIs.sol";
+import "../DynamicAttributes.sol";
 import "../utils/Errors.sol";
 
 /**
  * @dev Futureverse Swappable - An example of ERC721 IMintable contract
  */
-contract NFT is ERC721, AccessManaged {
+contract NFT is ERC721, DynamicAttributes, MultipleURIs {
     constructor(
         string memory token_,
         string memory name_,
-        address manager
-    ) ERC721(name_, token_) AccessManaged(manager) {}
+        address manager,
+        address register
+    )
+        ERC721(name_, token_)
+        DynamicAttributes(manager, register)
+        MultipleURIs(register)
+    {}
 
     /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC721) returns (bool) {
+    ) public view virtual override(ERC721, MultipleURIs) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
