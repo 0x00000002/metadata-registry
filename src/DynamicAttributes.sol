@@ -14,8 +14,8 @@ contract DynamicAttributes is Errors, AccessManaged {
     SignersRegister private _register;
 
     struct Attribute {
-        address owner;
-        string name;
+        address signer;
+        bytes32 name; // keccak256(abi.encodePacked(attributeName));
     }
 
     mapping(bytes32 uri => Attribute) attributes;
@@ -37,15 +37,9 @@ contract DynamicAttributes is Errors, AccessManaged {
      * @param attr Attribute
      * @dev Can be called only by studios allowed by AccessManager
      */
-    function addAttribute(
-        bytes32 uri,
-        Attribute calldata attr
-    ) public restricted {
-        if (attributes[uri].owner != _msgSender())
-            revert InvalidAttribute(WRONG_OWNER, uri);
-
+    function addAttribute(bytes32 uri, Attribute calldata attr) public {
         if (uri == bytes32(0)) revert InvalidInput(INVALID_URI);
-        if (bytes(attr.name).length == 0) revert InvalidInput(INVALID_NAME);
+        if (attr.name.length == 0) revert InvalidInput(INVALID_NAME);
 
         attributes[uri] = attr;
     }
@@ -60,7 +54,7 @@ contract DynamicAttributes is Errors, AccessManaged {
     function setAttribute(
         bytes calldata data,
         bytes calldata signature
-    ) public restricted {
+    ) public {
         address signer = _register.validateSignature(data, signature);
 
         (uint256 tokenId, bytes32[] memory ids, uint256[] memory values) = abi
@@ -74,8 +68,8 @@ contract DynamicAttributes is Errors, AccessManaged {
             uint256 value = values[i];
 
             if (uri == bytes32(0)) revert EmptyURI(INVALID_URI, i);
-            if (attributes[uri].owner != signer)
-                revert InvalidAttribute(WRONG_OWNER, uri);
+            if (attributes[uri].signer != signer)
+                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
 
             tokenAttributes[tokenId][uri] = value;
             emit AttributeSet(tokenId, uri, value);

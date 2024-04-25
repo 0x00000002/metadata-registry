@@ -3,15 +3,13 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./utils/Errors.sol";
 import "./SignersRegister.sol";
 import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
 contract MultipleURIs is Errors, IERC7160 {
-    using ECDSA for bytes32;
-
     SignersRegister private _register;
 
     constructor(address register) {
@@ -46,7 +44,7 @@ contract MultipleURIs is Errors, IERC7160 {
     /// @dev This call MUST emit a `TokenUriPinned` event
     /// @dev This call MAY emit a `MetadataUpdate` event from ERC-4096
     /// @param tokenId The identifier of the nft
-    /// @param index The index in the string array returned from the `tokenURIs` function that should be pinned for the token
+    /// @param index The index in the string array returned from the `tokenURIs` function that should be pinned
     function pinTokenURI(uint256 tokenId, uint256 index) external {}
 
     /// @notice Unpin metadata for a particular token

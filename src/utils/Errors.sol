@@ -6,11 +6,12 @@ pragma solidity 0.8.24;
  * @dev Futureverse - Errors definition contract
  */
 string constant UNKNOWN_SIGNER = "Unknown signer";
+string constant UNKNOWN_MANAGER = "Invalid manager";
 string constant INVALID_ADDRESS = "Invalid address";
 string constant INVALID_URI = "Invalid URI";
 string constant INVALID_NAME = "Invalid attribute name";
 string constant ID_VALUES_MISMATCH = "Attr IDs/values length mismatch";
-string constant WRONG_OWNER = "Wrong owner";
+string constant WRONG_ATTRIBUTE_OWNER = "Wrong attribute owner";
 
 contract Errors {
     error InvalidInput(string errMsg);

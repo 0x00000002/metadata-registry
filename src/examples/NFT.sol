@@ -10,10 +10,12 @@ import "../MultipleURIs.sol";
 import "../DynamicAttributes.sol";
 import "../utils/Errors.sol";
 
+// import "forge-std/console.sol";
+
 /**
  * @dev Futureverse Swappable - An example of ERC721 IMintable contract
  */
-contract NFT is ERC721, DynamicAttributes, MultipleURIs {
+contract NFT is ERC721, MultipleURIs, DynamicAttributes {
     constructor(
         string memory token_,
         string memory name_,
@@ -31,7 +33,9 @@ contract NFT is ERC721, DynamicAttributes, MultipleURIs {
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(ERC721, MultipleURIs) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IERC721).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /**
