@@ -10,7 +10,19 @@ import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
 contract MultipleURIs is Errors, IERC7160 {
-    SignersRegister private _register;
+    SignersRegister internal _register;
+
+    // See: https://github.com/multiformats/multihash
+    // IFPS URI = hash_function + size + hash
+    struct Version {
+        bytes32 hash; // hash = keccak256(attribute name)
+        uint8 hash_function; // 0x12 - sha2
+        uint8 size; // 0x20 = 32bytes,
+        uint64 proposer; // id of proposing entity (studio/artist)
+        uint64 eventId; // to track details from event
+    }
+
+    mapping(uint256 => Version) public versions;
 
     constructor(address register) {
         _register = SignersRegister(register);
@@ -63,4 +75,16 @@ contract MultipleURIs is Errors, IERC7160 {
     function hasPinnedTokenURI(
         uint256 tokenId
     ) external view returns (bool pinned) {}
+
+    function getURI(uint256 id) public view returns (string memory) {
+        Version memory version = versions[id];
+        return
+            string(
+                abi.encodePacked(
+                    Strings.toString(version.hash_function),
+                    Strings.toString(version.size),
+                    version.hash
+                )
+            );
+    }
 }

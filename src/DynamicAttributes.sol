@@ -8,10 +8,8 @@ import "./utils/Errors.sol";
 import "./SignersRegister.sol";
 import "./MultipleURIs.sol";
 
-contract DynamicAttributes is Errors, AccessManaged {
+contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     using ECDSA for bytes32;
-
-    SignersRegister private _register;
 
     struct Attribute {
         address signer;
@@ -27,9 +25,10 @@ contract DynamicAttributes is Errors, AccessManaged {
         uint256 value
     );
 
-    constructor(address manager_, address register_) AccessManaged(manager_) {
-        _register = SignersRegister(register_);
-    }
+    constructor(
+        address manager_,
+        address register_
+    ) MultipleURIs(register_) AccessManaged(manager_) {}
 
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.

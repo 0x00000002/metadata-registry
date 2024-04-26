@@ -15,17 +15,13 @@ import "../utils/Errors.sol";
 /**
  * @dev Futureverse Swappable - An example of ERC721 IMintable contract
  */
-contract NFT is ERC721, MultipleURIs, DynamicAttributes {
+contract NFT is ERC721, DynamicAttributes {
     constructor(
         string memory token_,
         string memory name_,
         address manager,
         address register
-    )
-        ERC721(name_, token_)
-        DynamicAttributes(manager, register)
-        MultipleURIs(register)
-    {}
+    ) ERC721(name_, token_) DynamicAttributes(manager, register) {}
 
     /**
      * @dev See {IERC165-supportsInterface}.
