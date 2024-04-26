@@ -221,7 +221,7 @@ contract NFT_Test is DSTest, Errors {
      * ----------------------------------- */
 
     function test_signing_itself() public {
-        vm.skip(true);
+        vm.skip(false);
 
         bytes memory data = abi.encode("asdf");
         bytes32 digest = keccak256(
@@ -258,13 +258,22 @@ contract NFT_Test is DSTest, Errors {
         vm.startPrank(game_studio_1);
         nft_.addAttribute(uri, attr);
 
-        (bytes memory data, bytes memory signature) = sign(
+        (bytes memory data1, bytes memory signature1) = sign(
             NFT_ID_1,
             uris,
             values
         );
 
-        nft_.setAttribute(data, signature);
+        (, bytes memory signature2) = sign(NFT_ID_2, uris, values);
+
+        // different data/signature
+        vm.expectRevert(
+            abi.encodeWithSelector(Errors.InvalidInput.selector, UNKNOWN_SIGNER)
+        );
+        nft_.setAttribute(data1, signature2);
+
+        // should pass
+        nft_.setAttribute(data1, signature1);
     }
 
     function sign(
