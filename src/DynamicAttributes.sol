@@ -21,8 +21,8 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
     event AttributesUpdated(
         uint256 indexed tokenId,
-        bytes32[] indexed uri,
-        uint256[] value
+        bytes32[] indexed uris,
+        uint256[] values
     );
 
     constructor(
