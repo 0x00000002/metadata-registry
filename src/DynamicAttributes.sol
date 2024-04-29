@@ -45,22 +45,7 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         Attribute[] calldata attrs
     ) public restricted returns (bytes32[] memory uris) {
         bytes32 studio = _register.getStudio(msg.sender);
-        uris = new bytes32[](attrs.length);
-        bytes32[] memory names = new bytes32[](attrs.length);
-
-        for (uint256 i = 0; i < attrs.length; i++) {
-            bytes32 uri = keccak256(abi.encodePacked(studio, attrs[i].name));
-
-            if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
-            if (attributes[uri].signer != address(0))
-                revert InvalidAttribute(URI_IS_TAKEN, uri);
-
-            attributes[uri] = attrs[i];
-            uris[i] = uri;
-            names[i] = attrs[i].name;
-        }
-
-        emit AttributesAdded(studio, names, uris);
+        uris = _addAttributes(studio, attrs);
     }
 
     /**
@@ -96,7 +81,7 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         bytes32[] memory uris,
         uint256[] memory values,
         address signer
-    ) internal {
+    ) private {
         if (uris.length != values.length)
             revert InvalidArrays(
                 ID_VALUES_MISMATCH,
@@ -115,5 +100,33 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         }
 
         emit AttributesUpdated(tokenId, uris, values);
+    }
+
+    /**
+     * @notice This function can be used by inheriting contracts
+     * @param studio Studio's name
+     * @param attrs Array of attributes to create
+     */
+    function _addAttributes(
+        bytes32 studio,
+        Attribute[] memory attrs
+    ) internal returns (bytes32[] memory uris) {
+        uint256 total = attrs.length;
+        uris = new bytes32[](total);
+        bytes32[] memory names = new bytes32[](total);
+
+        for (uint256 i = 0; i < attrs.length; i++) {
+            bytes32 uri = keccak256(abi.encodePacked(studio, attrs[i].name));
+
+            if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
+            if (attributes[uri].signer != address(0))
+                revert InvalidAttribute(URI_IS_TAKEN, uri);
+
+            attributes[uri] = attrs[i];
+            uris[i] = uri;
+            names[i] = attrs[i].name;
+        }
+
+        emit AttributesAdded(studio, names, uris);
     }
 }
