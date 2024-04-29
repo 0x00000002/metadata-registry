@@ -270,10 +270,10 @@ contract NFT_Test is DSTest, Errors {
         vm.expectRevert(
             abi.encodeWithSelector(Errors.InvalidInput.selector, UNKNOWN_SIGNER)
         );
-        nft_.setAttribute(data1, signature2);
+        nft_.setAttributes(data1, signature2);
 
         // should pass
-        nft_.setAttribute(data1, signature1);
+        nft_.setAttributes(data1, signature1);
     }
 
     function sign(

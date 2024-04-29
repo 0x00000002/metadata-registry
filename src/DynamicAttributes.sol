@@ -19,10 +19,10 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     mapping(bytes32 uri => Attribute) attributes;
     mapping(uint256 tokenId => mapping(bytes32 => uint256)) tokenAttributes;
 
-    event AttributeSet(
+    event AttributesUpdated(
         uint256 indexed tokenId,
-        bytes32 indexed uri,
-        uint256 value
+        bytes32[] indexed uri,
+        uint256[] value
     );
 
     constructor(
@@ -50,20 +50,42 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
      * @param signature The signature
      * @dev Can be called by anyone with a valid signed data
      */
-    function setAttribute(
-        bytes calldata data,
-        bytes calldata signature
-    ) public {
+    function setAttributes(bytes memory data, bytes memory signature) public {
         address signer = _register.validateSignature(data, signature);
 
-        (uint256 tokenId, bytes32[] memory ids, uint256[] memory values) = abi
+        (uint256 tokenId, bytes32[] memory uris, uint256[] memory values) = abi
             .decode(data, (uint256, bytes32[], uint256[]));
 
-        if (ids.length != values.length)
-            revert InvalidArrays(ID_VALUES_MISMATCH, ids.length, values.length);
+        _setAttributes(tokenId, uris, values, signer);
+    }
 
-        for (uint256 i = 0; i < ids.length; i++) {
-            bytes32 uri = ids[i];
+    /**
+     * @notice This function sets the value of DA by the Attribute Owner
+     */
+
+    function setAttributes(
+        uint256 tokenId,
+        bytes32[] calldata uris,
+        uint256[] calldata values
+    ) public restricted {
+        _setAttributes(tokenId, uris, values, _register.getSigner(msg.sender));
+    }
+
+    function _setAttributes(
+        uint256 tokenId,
+        bytes32[] memory uris,
+        uint256[] memory values,
+        address signer
+    ) internal {
+        if (uris.length != values.length)
+            revert InvalidArrays(
+                ID_VALUES_MISMATCH,
+                uris.length,
+                values.length
+            );
+
+        for (uint256 i = 0; i < uris.length; i++) {
+            bytes32 uri = uris[i];
             uint256 value = values[i];
 
             if (uri == bytes32(0)) revert EmptyURI(INVALID_URI, i);
@@ -71,7 +93,8 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
                 revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
 
             tokenAttributes[tokenId][uri] = value;
-            emit AttributeSet(tokenId, uri, value);
         }
+
+        emit AttributesUpdated(tokenId, uris, values);
     }
 }
