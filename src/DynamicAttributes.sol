@@ -19,6 +19,11 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     mapping(bytes32 uri => Attribute) attributes;
     mapping(uint256 tokenId => mapping(bytes32 => uint256)) tokenAttributes;
 
+    event AttributesAdded(
+        bytes32 indexed studio,
+        bytes32[] names,
+        bytes32[] uris
+    );
     event AttributesUpdated(
         uint256 indexed tokenId,
         bytes32[] indexed uris,
@@ -33,13 +38,15 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.
      * @param attrs Attribute
+     * @return uris Array of URIs
      * @dev Can be called only by studios allowed by AccessManager
      */
     function addAttributes(
         Attribute[] calldata attrs
     ) public restricted returns (bytes32[] memory uris) {
         bytes32 studio = _register.getStudio(msg.sender);
-        bytes32[] memory _uris = new bytes32[](attrs.length);
+        uris = new bytes32[](attrs.length);
+        bytes32[] memory names = new bytes32[](attrs.length);
 
         for (uint256 i = 0; i < attrs.length; i++) {
             bytes32 uri = keccak256(abi.encodePacked(studio, attrs[i].name));
@@ -49,8 +56,11 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
                 revert InvalidAttribute(URI_IS_TAKEN, uri);
 
             attributes[uri] = attrs[i];
-            _uris[i] = uri;
+            uris[i] = uri;
+            names[i] = attrs[i].name;
         }
+
+        emit AttributesAdded(studio, names, uris);
     }
 
     /**
