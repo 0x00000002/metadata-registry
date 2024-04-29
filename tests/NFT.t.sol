@@ -243,7 +243,10 @@ contract NFT_Test is DSTest, Errors {
         nft_.mint(user, NFT_ID_1);
         assertEq(nft_.balanceOf(user), 1);
 
-        DynamicAttributes.Attribute memory attr = DynamicAttributes.Attribute(
+        DynamicAttributes.Attribute[]
+            memory attrs = new DynamicAttributes.Attribute[](1);
+
+        attrs[0] = DynamicAttributes.Attribute(
             be_signer,
             "HP" // hitpoints
         );
@@ -256,7 +259,7 @@ contract NFT_Test is DSTest, Errors {
         values[0] = 100;
 
         vm.startPrank(game_studio_1);
-        nft_.addAttribute(uri, attr);
+        nft_.addAttributes(uris, attrs);
 
         (bytes memory data1, bytes memory signature1) = sign(
             NFT_ID_1,

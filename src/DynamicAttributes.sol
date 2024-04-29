@@ -32,15 +32,23 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.
-     * @param uri URI of the attribute
-     * @param attr Attribute
+     * @param uris URI of the attribute
+     * @param attrs Attribute
      * @dev Can be called only by studios allowed by AccessManager
      */
-    function addAttribute(bytes32 uri, Attribute calldata attr) public {
-        if (uri == bytes32(0)) revert InvalidInput(INVALID_URI);
-        if (attr.name.length == 0) revert InvalidInput(INVALID_NAME);
+    function addAttributes(
+        bytes32[] calldata uris,
+        Attribute[] calldata attrs
+    ) public restricted {
+        if (uris.length != attrs.length)
+            revert InvalidArrays(ID_VALUES_MISMATCH, uris.length, attrs.length);
 
-        attributes[uri] = attr;
+        for (uint256 i = 0; i < uris.length; i++) {
+            if (uris[i] == bytes32(0)) revert InvalidInput(INVALID_URI);
+            if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
+
+            attributes[uris[i]] = attrs[i];
+        }
     }
 
     /**
