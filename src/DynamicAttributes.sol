@@ -32,22 +32,24 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.
-     * @param uris URI of the attribute
      * @param attrs Attribute
      * @dev Can be called only by studios allowed by AccessManager
      */
     function addAttributes(
-        bytes32[] calldata uris,
         Attribute[] calldata attrs
-    ) public restricted {
-        if (uris.length != attrs.length)
-            revert InvalidArrays(ID_VALUES_MISMATCH, uris.length, attrs.length);
+    ) public restricted returns (bytes32[] memory uris) {
+        bytes32 studio = _register.getStudio(msg.sender);
+        bytes32[] memory _uris = new bytes32[](attrs.length);
 
-        for (uint256 i = 0; i < uris.length; i++) {
-            if (uris[i] == bytes32(0)) revert InvalidInput(INVALID_URI);
+        for (uint256 i = 0; i < attrs.length; i++) {
+            bytes32 uri = keccak256(abi.encodePacked(studio, attrs[i].name));
+
             if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
+            if (attributes[uri].signer != address(0))
+                revert InvalidAttribute(URI_IS_TAKEN, uri);
 
-            attributes[uris[i]] = attrs[i];
+            attributes[uri] = attrs[i];
+            _uris[i] = uri;
         }
     }
 
@@ -94,13 +96,12 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
         for (uint256 i = 0; i < uris.length; i++) {
             bytes32 uri = uris[i];
-            uint256 value = values[i];
 
-            if (uri == bytes32(0)) revert EmptyURI(INVALID_URI, i);
+            if (uri == bytes32(0)) revert EmptyURI(URI_DOES_NOT_EXIST, i);
             if (attributes[uri].signer != signer)
                 revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
 
-            tokenAttributes[tokenId][uri] = value;
+            tokenAttributes[tokenId][uri] = values[i];
         }
 
         emit AttributesUpdated(tokenId, uris, values);

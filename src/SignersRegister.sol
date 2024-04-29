@@ -14,6 +14,7 @@ contract SignersRegister is Errors, AccessManaged {
     // we want allow studios to have different accounts
     // for signing transactions and managing the signer account
     mapping(address account => address signer) private _managers;
+    mapping(address account => bytes32 studioName) private _studios;
     mapping(address signer => bool status) private _signers;
 
     event SignerUpdated(
@@ -26,6 +27,10 @@ contract SignersRegister is Errors, AccessManaged {
 
     function getSigner(address addr) external view returns (address) {
         return _managers[addr];
+    }
+
+    function getStudio(address addr) external view returns (bytes32) {
+        return _studios[addr];
     }
 
     function isSigner(address addr) external view returns (bool) {

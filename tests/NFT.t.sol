@@ -259,7 +259,7 @@ contract NFT_Test is DSTest, Errors {
         values[0] = 100;
 
         vm.startPrank(game_studio_1);
-        nft_.addAttributes(uris, attrs);
+        nft_.addAttributes(attrs);
 
         (bytes memory data1, bytes memory signature1) = sign(
             NFT_ID_1,
