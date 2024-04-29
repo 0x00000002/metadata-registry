@@ -76,32 +76,6 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         _setAttributes(tokenId, uris, values, _register.getSigner(msg.sender));
     }
 
-    function _setAttributes(
-        uint256 tokenId,
-        bytes32[] memory uris,
-        uint256[] memory values,
-        address signer
-    ) private {
-        if (uris.length != values.length)
-            revert InvalidArrays(
-                ID_VALUES_MISMATCH,
-                uris.length,
-                values.length
-            );
-
-        for (uint256 i = 0; i < uris.length; i++) {
-            bytes32 uri = uris[i];
-
-            if (uri == bytes32(0)) revert EmptyURI(URI_DOES_NOT_EXIST, i);
-            if (attributes[uri].signer != signer)
-                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
-
-            tokenAttributes[tokenId][uri] = values[i];
-        }
-
-        emit AttributesUpdated(tokenId, uris, values);
-    }
-
     /**
      * @notice This function can be used by inheriting contracts
      * @param studio Studio's name
@@ -128,5 +102,31 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         }
 
         emit AttributesAdded(studio, names, uris);
+    }
+
+    function _setAttributes(
+        uint256 tokenId,
+        bytes32[] memory uris,
+        uint256[] memory values,
+        address signer
+    ) private {
+        if (uris.length != values.length)
+            revert InvalidArrays(
+                ID_VALUES_MISMATCH,
+                uris.length,
+                values.length
+            );
+
+        for (uint256 i = 0; i < uris.length; i++) {
+            bytes32 uri = uris[i];
+
+            if (uri == bytes32(0)) revert EmptyURI(URI_DOES_NOT_EXIST, i);
+            if (attributes[uri].signer != signer)
+                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
+
+            tokenAttributes[tokenId][uri] = values[i];
+        }
+
+        emit AttributesUpdated(tokenId, uris, values);
     }
 }
