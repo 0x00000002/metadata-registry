@@ -77,7 +77,11 @@ contract NFT_Test is Test, Errors {
     // `beforeEach` block
     function setUp() public {
         setupAddresses();
+<<<<<<< HEAD
         setupAccessManager_external();
+=======
+        setupAccessManager();
+>>>>>>> moreTests
         setupSignersRegister();
         setupTestContracts();
     }
@@ -107,7 +111,7 @@ contract NFT_Test is Test, Errors {
 
     // AcessManager contract is deployed on both Porcini and ROOT chains,
     // this setup recreates the roles of the real AccessManager contract
-    function setupAccessManager_external() internal {
+    function setupAccessManager() internal {
         am_ = new AccessManager(admin);
         aManager = address(am_);
 
@@ -337,6 +341,55 @@ contract NFT_Test is Test, Errors {
             )
         );
         nft_.setAttributes(data, signature);
+<<<<<<< HEAD
+=======
+    }
+
+    function test_setAttributes_forced_happy_path() public {
+        DynamicAttributes.Attribute[]
+            memory attrs = new DynamicAttributes.Attribute[](1);
+
+        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+
+        vm.startPrank(aStudio_1);
+        bytes32[] memory uris = nft_.addAttributes(attrs);
+        uint256[] memory values = new uint256[](uris.length);
+        values[0] = 100;
+        nft_.setAttributes(NFT_ID_1, uris, values);
+        vm.stopPrank();
+    }
+
+    function test_setAttributes_forced_wrong_owner() public {
+        DynamicAttributes.Attribute[]
+            memory attrs = new DynamicAttributes.Attribute[](1);
+
+        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+
+        vm.prank(aStudio_1);
+        bytes32[] memory uris = nft_.addAttributes(attrs);
+        uint256[] memory values = new uint256[](uris.length);
+        values[0] = 100;
+
+        bytes32[] memory list = nft_.getAttributesList();
+
+        assertTrue(list.length == 1, "Should have 1 attribute");
+        assertEq(
+            list[0],
+            keccak256(
+                abi.encodePacked(studio_1, bytes32(abi.encodePacked("STAMINA")))
+            )
+        );
+
+        vm.prank(aStudio_2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.InvalidAttribute.selector,
+                WRONG_ATTRIBUTE_OWNER,
+                uris[0]
+            )
+        );
+        nft_.setAttributes(NFT_ID_1, uris, values);
+>>>>>>> moreTests
     }
 
     function sign(

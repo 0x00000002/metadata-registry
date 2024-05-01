@@ -8,8 +8,13 @@ pragma solidity 0.8.24;
 string constant UNKNOWN_SIGNER = "Unknown signer";
 string constant UNKNOWN_MANAGER = "Invalid manager";
 string constant INVALID_ADDRESS = "Invalid address";
+<<<<<<< HEAD
 string constant ID_IS_TAKEN = "ID already exists";
 string constant ID_DOES_NOT_EXIST = "ID does not exist";
+=======
+string constant ATTRIBUTE_EXISTS = "Attribute already exists";
+string constant ATTRIBUTE_NOT_EXIST = "Attribute does not exist";
+>>>>>>> moreTests
 string constant STUDIO_EXISTS = "Studio exist";
 
 string constant INVALID_NAME = "Invalid attribute name";

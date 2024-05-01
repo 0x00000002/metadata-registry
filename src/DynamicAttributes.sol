@@ -120,7 +120,7 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
             if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
             if (_attribute[id].signer != address(0))
-                revert InvalidAttribute(ID_IS_TAKEN, id);
+                revert InvalidAttribute(ATTRIBUTE_EXISTS, id);
 
             _attribute[id] = attrs[i];
             attrIds[i] = id;
@@ -147,7 +147,7 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
             bytes32 id = attrIds[i];
 
             if (id == bytes32(0))
-                revert NonExistingAttribute(ID_DOES_NOT_EXIST, id, i);
+                revert NonExistingAttribute(ATTRIBUTE_NOT_EXIST, id, i);
             if (_attribute[id].signer != signer)
                 revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, id);
 
