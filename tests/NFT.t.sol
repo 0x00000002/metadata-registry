@@ -8,25 +8,9 @@ import "../src/examples/NFT.sol";
 import "../src/utils/Errors.sol";
 import "../src/utils/AccessManagedRoles.sol";
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
+
 import "forge-std/console.sol";
-import "forge-std/Vm.sol";
-
-address constant admin = 0x1Fb0E85b7Ba55F0384d0E06D81DF915aeb3baca3;
-address constant user = 0xA847d497b38B9e11833EAc3ea03921B40e6d847c;
-address constant be_signer = 0xaebC048B4D219D6822C17F1fe06E36Eba67D4144;
-
-// Run `anvil` to get PKs for the following addresses
-address constant cso = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-address constant multisig = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
-address constant sr_admin = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
-address constant game_studio_1 = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
-address constant game_studio_2 = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-address constant acc4 = 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc;
-address constant acc5 = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
-address constant acc6 = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
-address constant acc7 = 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f;
-address constant acc8 = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720;
 
 bytes32 constant DEFAULT_ADMIN_ROLE = 0x00;
 
@@ -42,24 +26,40 @@ uint256 constant AMOUNT_TO_MINT_SEQUENTIALLY = 10;
 /**
  * @dev Tests for the ASM The Next Legend - Character contract
  */
-contract NFT_Test is DSTest, Errors {
+contract NFT_Test is Test, Errors {
     address deployer = address(this);
 
     // Naming convention: contracts variables ends with _, e.g.: nft_ or am_,
-    // and their addresses starts with `a`, e.g.: aNft or aAManager
+    // and their addresses starts with `a`, e.g.: aNft or aManager
     NFT nft_;
     AccessManager am_;
     SignersRegister sr_;
-    address aAManager;
-    address aSRegister;
+    address aManager;
+    address aRegister;
     address aNft;
 
-    // Cheat codes are state changing methods called from the address:
-    // 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
-    Vm vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+    address user;
+    address admin;
+    address multisig;
+    address ms_signer_1;
+    address ms_signer_2;
+    address studio_1_signer;
+    address studio_2_signer;
+    address aStudio_1;
+    address aStudio_2;
+    string studio_1_name = "Studio 1";
+    string studio_2_name = "Studio 2";
+    bytes32 studio_1 = bytes32(abi.encodePacked(studio_1_name));
+    bytes32 studio_2 = bytes32(abi.encodePacked(studio_2_name));
+    address sr_admin;
 
-    uint256 signerPK = vm.envUint("DEV_SIGNER_PRIVATE_KEY");
-    // 0xc367447789c3d98a0005c48b761ffe7d2802cea44dace8656033b15d90914c1d;
+    uint256 signer1PK;
+    uint256 signer2PK;
+
+    bool isTrue;
+    bool isClosed;
+    bool canCall;
+    uint256 delay;
 
     event Transfer(
         address indexed from,
@@ -76,16 +76,40 @@ contract NFT_Test is DSTest, Errors {
     // each time after deployment. Think of this like a JavaScript
     // `beforeEach` block
     function setUp() public {
+        setupAddresses();
         setupAccessManager_external();
         setupSignersRegister();
         setupTestContracts();
+    }
+
+    function setupAddresses() public {
+        admin = vm.addr(
+            vm.parseUint(
+                "0xe49dcc90004a6788dcf67b74878c755d61502d686f76f1714f3ed91629fd4d52"
+            )
+        );
+        vm.label(admin, "ADMIN");
+
+        user = makeAddr("user");
+        multisig = makeAddr("multisig");
+
+        ms_signer_1 = makeAddr("ms_signer_1");
+        ms_signer_2 = makeAddr("ms_signer_2");
+
+        sr_admin = makeAddr("sr_admin");
+
+        aStudio_1 = makeAddr(studio_1_name);
+        aStudio_2 = makeAddr(studio_2_name);
+
+        (studio_1_signer, signer1PK) = makeAddrAndKey("studio_1_signer");
+        (studio_2_signer, signer2PK) = makeAddrAndKey("studio_2_signer");
     }
 
     // AcessManager contract is deployed on both Porcini and ROOT chains,
     // this setup recreates the roles of the real AccessManager contract
     function setupAccessManager_external() internal {
         am_ = new AccessManager(admin);
-        aAManager = address(am_);
+        aManager = address(am_);
 
         // Multisig's permissions
         bytes4[] memory selectors = new bytes4[](16);
@@ -107,28 +131,21 @@ contract NFT_Test is DSTest, Errors {
         selectors[15] = am_.multicall.selector;
 
         vm.startPrank(admin);
-        am_.grantRole(FV_AM_MULTISIG, multisig, 0); // 1 hour delay for all operations
-        am_.setTargetFunctionRole(aAManager, selectors, FV_AM_MULTISIG);
-        uint64 role = am_.getTargetFunctionRole(
-            aAManager,
-            am_.grantRole.selector
-        );
-        assertTrue(
-            role == FV_AM_MULTISIG,
-            "Multisig should have FV_AM_MULTISIG role for grantRole()"
-        );
-        (bool hasRole, ) = am_.hasRole(role, multisig);
-        assertTrue(hasRole, "Multisig should have FV_AM_MULTISIG role");
-        bool isClosed = am_.isTargetClosed(aAManager);
+
+        // Admin role is required for managing AccessManager itself with a Zero delay
+        // Multisig can have not an ADMIN_ROLE, but then delay is required (AccessManager limitation)
+        am_.grantRole(ADMIN_ROLE, multisig, 0);
+
+        isClosed = am_.isTargetClosed(aManager);
         assertTrue(!isClosed, "AccessManager should be open");
-        isClosed = am_.isTargetClosed(aSRegister);
+        isClosed = am_.isTargetClosed(aRegister);
         assertTrue(!isClosed, "SignersRegister should be open");
 
         vm.stopPrank();
 
-        (bool canCall, uint256 delay) = am_.canCall(
+        (canCall, delay) = am_.canCall(
             multisig,
-            aAManager,
+            aManager,
             am_.setTargetFunctionRole.selector
         );
         assertTrue(canCall, "Multisig can call setTargetFunctionRole()");
@@ -136,64 +153,89 @@ contract NFT_Test is DSTest, Errors {
 
         (canCall, delay) = am_.canCall(
             multisig,
-            aAManager,
+            aManager,
             am_.grantRole.selector
         );
 
         assertTrue(canCall, "Multisig should be able to call grantRole()");
         assertEq(delay, 0, "Multisig should have no delay for grantRole()");
 
-        // console.logBytes4(am_.grantRole.selector);
-        // console.log("multisig:", multisig);
-        // console.log("am_:", address(am_));
-        // console.log("FV_SR_MANAGER:", FV_SR_MANAGER);
-
         vm.startPrank(multisig);
-        // am_.setTargetClosed(aAManager, true);
-        // am_.grantRole(FV_SR_MANAGER, sr_admin, 1 hours);
+
+        am_.grantRole(FV_SR_MANAGER, sr_admin, 1 hours);
         vm.stopPrank();
     }
 
     function setupSignersRegister() internal {
         vm.startPrank(admin);
-        sr_ = new SignersRegister(aAManager);
-        aSRegister = address(sr_);
+        sr_ = new SignersRegister(aManager);
+        aRegister = address(sr_);
 
-        sr_.addManager(game_studio_1, be_signer, true);
+        sr_.update(studio_1, aStudio_1, studio_1_signer, true);
+        sr_.update(studio_2, aStudio_2, studio_2_signer, true);
 
         bytes4[] memory selectors = new bytes4[](1);
-        selectors[0] = sr_.addManager.selector;
+        selectors[0] = sr_.update.selector;
 
         vm.startPrank(admin);
         am_.grantRole(FV_SR_MANAGER, sr_admin, 1 hours);
-        am_.setTargetFunctionRole(aSRegister, selectors, FV_SR_MANAGER);
+        am_.setTargetFunctionRole(aRegister, selectors, FV_SR_MANAGER);
         vm.stopPrank();
     }
 
     function setupTestContracts() internal {
-        nft_ = new NFT("NFT", "NFT", aAManager, aSRegister);
+        nft_ = new NFT("NFT", "NFT", aManager, aRegister);
         aNft = address(nft_);
 
-        // Setup Signers Register (SR)
+        bytes4[] memory selectors = new bytes4[](2);
+        selectors[0] = nft_.addAttributes.selector;
+        selectors[1] = 0xa89fed51; // there are two setAttributes functions
+        // therefore, nft_.setAttributes.selector won't work
+        // you can find its selectors by `forge selectors ls DynamicAttributes`
+        // or use abi.encodeCall and get the first 4 bytes of the result
 
-        // bytes memory data = abi.encodeCall(sr_.setSigner, (be_signer, true));
-        // uint48 when = uint48(block.timestamp) + 1 days;
-        // console.logBytes4(sr_.setSigner.selector);
-        // console.logBytes(data);
-        // console.log("aSRegister:", aSRegister);
-        // console.log("be_signer:", be_signer);
-        // console.log("aAManager:", aAManager);
-        // console.log("when:", when);
-        // vm.prank(multisig);
-        // am_.schedule(aAManager, data, when);
+        vm.startPrank(admin);
+        am_.grantRole(STUDIO_MANAGER, aStudio_1, 0);
+        am_.grantRole(STUDIO_MANAGER, aStudio_2, 0);
+        am_.setTargetFunctionRole(aNft, selectors, STUDIO_MANAGER);
+        vm.stopPrank();
+
+        assertEq(nft_.balanceOf(user), 0);
+        vm.prank(admin);
+        nft_.mint(user, NFT_ID_1);
+        assertEq(nft_.balanceOf(user), 1);
     }
 
     /** ----------------------------------
      * ! Contracts states
      * ----------------------------------- */
 
+    function test_print_addresses() public {
+        vm.skip(true);
+        // emit log_address(address(this));
+        // emit log_address(admin);
+        // emit log_address(user);
+        // emit log_address(ms_signer_1);
+        // emit log_address(ms_signer_2);
+        // emit log_address(aManager);
+        // emit log_address(aMultisig);
+        console.log("%s: \t\t %s", "deployer", address(this));
+        console.log("%s: \t\t %s", "admin", admin);
+        console.log("%s: \t\t %s", "user", user);
+        console.log("%s: \t\t %s", "ms_signer_1", ms_signer_1);
+        console.log("%s: \t\t %s", "ms_signer_2", ms_signer_2);
+        console.log("%s: \t\t %s", "multisig", multisig);
+        console.log("%s: \t\t %s", "FVAM", aManager);
+        console.log("-------------");
+        console.log("%s: \t\t %s", "aStudio_1", aStudio_1);
+        console.log("%s: \t %s", "studio_1_signer", studio_1_signer);
+        console.log("%s: \t\t %s", "aStudio_2", aStudio_2);
+        console.log("%s: \t %s", "studio_2_signer", studio_2_signer);
+        console.log("-------------");
+    }
+
     function test_contracts_states() public {
-        // vm.skip(true);
+        vm.skip(false);
 
         assertTrue(
             nft_.supportsInterface(type(IERC721).interfaceId),
@@ -211,8 +253,8 @@ contract NFT_Test is DSTest, Errors {
         );
 
         assertTrue(
-            sr_.getSigner(game_studio_1) == be_signer,
-            "Game Studio 1's singer is BE Signer"
+            sr_.getSigner(aStudio_1) == studio_1_signer,
+            "Game Studio 1's singer is BE Signer 1"
         );
     }
 
@@ -223,67 +265,86 @@ contract NFT_Test is DSTest, Errors {
     function test_signing_itself() public {
         vm.skip(false);
 
-        bytes memory data = abi.encode("asdf");
+        bytes memory data = abi.encode("test");
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19Ethereum Signed Message:\n32",
                 keccak256(abi.encode(data))
             )
         );
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPK, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer1PK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.prank(user);
         sr_.validateSignature(data, signature);
     }
 
-    function test_adding_attributes() public {
-        assertEq(nft_.balanceOf(user), 0);
-        vm.prank(admin);
-        nft_.mint(user, NFT_ID_1);
-        assertEq(nft_.balanceOf(user), 1);
-
+    function test_setAttributesWithSignature_happy_path() public {
         DynamicAttributes.Attribute[]
             memory attrs = new DynamicAttributes.Attribute[](1);
 
-        attrs[0] = DynamicAttributes.Attribute(
-            be_signer,
-            "HP" // hitpoints
-        );
+        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STRENGTH");
 
-        bytes32 uri = keccak256(abi.encodePacked("HP"));
-
-        bytes32[] memory uris = new bytes32[](1);
-        uint256[] memory values = new uint256[](1);
-        uris[0] = uri;
+        vm.startPrank(aStudio_1);
+        bytes32[] memory uris = nft_.addAttributes(attrs);
+        uint256[] memory values = new uint256[](uris.length);
         values[0] = 100;
 
-        vm.startPrank(game_studio_1);
-        nft_.addAttributes(attrs);
-
-        (bytes memory data1, bytes memory signature1) = sign(
+        (bytes memory data, bytes memory signature) = sign(
             NFT_ID_1,
             uris,
-            values
+            values,
+            signer1PK
         );
 
-        (, bytes memory signature2) = sign(NFT_ID_2, uris, values);
+        nft_.setAttributes(data, signature);
+    }
 
-        // different data/signature
+    function test_setAttributesWithSignature_wrong_owner() public {
+        DynamicAttributes.Attribute[]
+            memory attrs = new DynamicAttributes.Attribute[](1);
+
+        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+
+        vm.prank(aStudio_1);
+        bytes32[] memory uris = nft_.addAttributes(attrs);
+        uint256[] memory values = new uint256[](uris.length);
+        values[0] = 100;
+
+        (bytes memory data, bytes memory signature) = sign(
+            NFT_ID_1,
+            uris,
+            values,
+            signer2PK
+        );
+
+        bytes32[] memory list = nft_.getAttributesList();
+
+        assertTrue(list.length == 1, "Should have 1 attribute");
+        assertEq(
+            list[0],
+            keccak256(
+                abi.encodePacked(studio_1, bytes32(abi.encodePacked("STAMINA")))
+            )
+        );
+
+        vm.prank(aStudio_2);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.InvalidInput.selector, UNKNOWN_SIGNER)
+            abi.encodeWithSelector(
+                Errors.InvalidAttribute.selector,
+                WRONG_ATTRIBUTE_OWNER,
+                uris[0]
+            )
         );
-        nft_.setAttributes(data1, signature2);
-
-        // should pass
-        nft_.setAttributes(data1, signature1);
+        nft_.setAttributes(data, signature);
     }
 
     function sign(
         uint256 tokenId,
         bytes32[] memory attrs,
-        uint256[] memory values
-    ) public view returns (bytes memory payload, bytes memory signature) {
+        uint256[] memory values,
+        uint256 pk
+    ) public pure returns (bytes memory payload, bytes memory signature) {
         require(attrs.length == values.length, "Arrays length mismatch");
 
         payload = abi.encode(tokenId, attrs, values);
@@ -293,7 +354,7 @@ contract NFT_Test is DSTest, Errors {
                 keccak256(abi.encode(payload))
             )
         );
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPK, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
         signature = abi.encodePacked(r, s, v);
     }
 }

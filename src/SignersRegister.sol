@@ -11,30 +11,30 @@ import "forge-std/console.sol";
 contract SignersRegister is Errors, AccessManaged {
     using ECDSA for bytes32;
 
-    // we want allow studios to have different accounts
-    // for signing transactions and managing the signer account
-    mapping(address account => address signer) private _managers;
-    mapping(address account => bytes32 studioName) private _studios;
-    mapping(address signer => bool status) private _signers;
+    // Studio can have many managers, but only one BackEnd signer
+    mapping(address account => bytes32 studioName) private _name;
+    mapping(address account => address signer) private _signer;
+    mapping(address signer => bool status) private _status;
 
     event SignerUpdated(
-        address indexed manager,
+        bytes32 indexed name, // bytes32(abi.encodePacked(studioName))
+        address indexed acc,
         address indexed signer,
         bool status
     );
 
     constructor(address manager) AccessManaged(manager) {}
 
-    function getSigner(address addr) external view returns (address) {
-        return _managers[addr];
+    function getSigner(address acc) external view returns (address) {
+        return _signer[acc];
     }
 
-    function getStudio(address addr) external view returns (bytes32) {
-        return _studios[addr];
+    function getName(address acc) external view returns (bytes32) {
+        return _name[acc];
     }
 
-    function isSigner(address addr) external view returns (bool) {
-        return _signers[addr];
+    function isSigner(address acc) external view returns (bool) {
+        return _status[acc];
     }
 
     /**
@@ -53,38 +53,24 @@ contract SignersRegister is Errors, AccessManaged {
     }
 
     /**
-     * @notice Add a manager and a signer
-     * @dev This function can only be called by FV admins
-     * @param manager The Studio's address to update
-     * @param signer signer's address
+     * @notice Update the signer's status
+     * @param acc Studio address to manage signer's status
+     * @param signer Signer address
      * @param status true/false = active/inactive
+     * @dev This function can only be called by FV admins
      */
-    function addManager(
-        address manager,
+    function update(
+        bytes32 name,
+        address acc,
         address signer,
         bool status
     ) external restricted {
-        if (manager == address(0)) revert InvalidInput(INVALID_ADDRESS);
-        _managers[manager] = signer;
-        _signers[signer] = status;
-        emit SignerUpdated(manager, signer, status);
-    }
-
-    /**
-     * @notice Set signer - true/false = active/inactive
-     * @dev This function can only to called from contracts account managers with MANAGER
-     * @param addr The Studio's address to update
-     * @param signer signer's address
-     */
-    function setSigner(address addr, address signer, bool status) external {
-        if (addr == address(0)) revert InvalidInput(INVALID_ADDRESS);
-        if (_managers[_msgSender()] == address(0) || _msgSender() != addr)
-            revert InvalidInput(UNKNOWN_MANAGER);
-
-        _managers[addr] = signer;
-        _signers[signer] = status;
-
-        emit SignerUpdated(addr, signer, status);
+        if (acc == address(0)) revert InvalidInput(INVALID_ADDRESS);
+        if (_name[acc] != bytes32(0)) revert InvalidInput(STUDIO_EXISTS);
+        _name[acc] = name;
+        _signer[acc] = signer;
+        _status[signer] = status;
+        emit SignerUpdated(name, acc, signer, status);
     }
 
     /**
@@ -109,7 +95,7 @@ contract SignersRegister is Errors, AccessManaged {
         bytes memory signature
     ) private view returns (address signer) {
         signer = ethSignedMessageHash.recover(signature);
-        if (!_signers[signer]) revert InvalidInput(UNKNOWN_SIGNER);
+        if (!_status[signer]) revert InvalidInput(UNKNOWN_SIGNER);
     }
 
     /**

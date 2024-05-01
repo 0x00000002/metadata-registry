@@ -27,4 +27,4 @@ uint64 constant FV_SR_MANAGER = 3_001;
 uint64 constant FV_DA_MANAGER = 5_001;
 
 // NFT.sol roles
-uint64 constant NFT_MANAGER = 100_001;
+uint64 constant STUDIO_MANAGER = 100_001;

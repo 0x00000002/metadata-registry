@@ -13,21 +13,22 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
     struct Attribute {
         address signer;
-        bytes32 name; // keccak256(abi.encodePacked(attributeName));
+        bytes32 name; // bytes32(abi.encodePacked(attributeName))
     }
 
-    mapping(bytes32 uri => Attribute) attributes;
-    mapping(uint256 tokenId => mapping(bytes32 => uint256)) tokenAttributes;
+    mapping(bytes32 attrId => Attribute) private _attribute;
+    mapping(uint256 tokenId => mapping(bytes32 => uint256)) private _value;
+    bytes32[] private _tokenAttributes;
 
     event AttributesAdded(
         bytes32 indexed studio,
-        bytes32[] names,
-        bytes32[] uris
+        bytes32[] attrNames,
+        bytes32[] attrIds
     );
     event AttributesUpdated(
         uint256 indexed tokenId,
-        bytes32[] indexed uris,
-        uint256[] values
+        bytes32[] indexed attrIds,
+        uint256[] attrValues
     );
 
     constructor(
@@ -35,17 +36,34 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
         address register_
     ) MultipleURIs(register_) AccessManaged(manager_) {}
 
+    function getAttribute(
+        bytes32 attrId
+    ) public view returns (Attribute memory) {
+        return _attribute[attrId];
+    }
+
+    function getAttributesList() public view returns (bytes32[] memory) {
+        return _tokenAttributes;
+    }
+
+    function getValue(
+        uint256 tokenId,
+        bytes32 attrId
+    ) public view returns (uint256) {
+        return _value[tokenId][attrId];
+    }
+
     /**
      * @notice This function creates a global NFT attribute, with the given URI and name.
      * @param attrs Attribute
-     * @return uris Array of URIs
+     * @return attrIds Array of attribute IDs
      * @dev Can be called only by studios allowed by AccessManager
      */
     function addAttributes(
         Attribute[] calldata attrs
-    ) public restricted returns (bytes32[] memory uris) {
-        bytes32 studio = _register.getStudio(msg.sender);
-        uris = _addAttributes(studio, attrs);
+    ) public restricted returns (bytes32[] memory attrIds) {
+        bytes32 studio = _register.getName(msg.sender);
+        attrIds = _addAttributes(studio, attrs);
     }
 
     /**
@@ -58,10 +76,13 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     function setAttributes(bytes memory data, bytes memory signature) public {
         address signer = _register.validateSignature(data, signature);
 
-        (uint256 tokenId, bytes32[] memory uris, uint256[] memory values) = abi
-            .decode(data, (uint256, bytes32[], uint256[]));
+        (
+            uint256 tokenId,
+            bytes32[] memory attrIds,
+            uint256[] memory values
+        ) = abi.decode(data, (uint256, bytes32[], uint256[]));
 
-        _setAttributes(tokenId, uris, values, signer);
+        _setAttributes(tokenId, attrIds, values, signer);
     }
 
     /**
@@ -70,10 +91,15 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
 
     function setAttributes(
         uint256 tokenId,
-        bytes32[] calldata uris,
+        bytes32[] calldata attrIds,
         uint256[] calldata values
     ) public restricted {
-        _setAttributes(tokenId, uris, values, _register.getSigner(msg.sender));
+        _setAttributes(
+            tokenId,
+            attrIds,
+            values,
+            _register.getSigner(msg.sender)
+        );
     }
 
     /**
@@ -84,49 +110,50 @@ contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
     function _addAttributes(
         bytes32 studio,
         Attribute[] memory attrs
-    ) internal returns (bytes32[] memory uris) {
+    ) internal returns (bytes32[] memory attrIds) {
         uint256 total = attrs.length;
-        uris = new bytes32[](total);
+        attrIds = new bytes32[](total);
         bytes32[] memory names = new bytes32[](total);
 
         for (uint256 i = 0; i < attrs.length; i++) {
-            bytes32 uri = keccak256(abi.encodePacked(studio, attrs[i].name));
+            bytes32 id = keccak256(abi.encodePacked(studio, attrs[i].name));
 
             if (attrs[i].name.length == 0) revert InvalidInput(INVALID_NAME);
-            if (attributes[uri].signer != address(0))
-                revert InvalidAttribute(URI_IS_TAKEN, uri);
+            if (_attribute[id].signer != address(0))
+                revert InvalidAttribute(ID_IS_TAKEN, id);
 
-            attributes[uri] = attrs[i];
-            uris[i] = uri;
+            _attribute[id] = attrs[i];
+            attrIds[i] = id;
             names[i] = attrs[i].name;
+            _tokenAttributes.push(id);
         }
-
-        emit AttributesAdded(studio, names, uris);
+        emit AttributesAdded(studio, names, attrIds);
     }
 
     function _setAttributes(
         uint256 tokenId,
-        bytes32[] memory uris,
+        bytes32[] memory attrIds,
         uint256[] memory values,
         address signer
     ) private {
-        if (uris.length != values.length)
+        if (attrIds.length != values.length)
             revert InvalidArrays(
                 ID_VALUES_MISMATCH,
-                uris.length,
+                attrIds.length,
                 values.length
             );
 
-        for (uint256 i = 0; i < uris.length; i++) {
-            bytes32 uri = uris[i];
+        for (uint256 i = 0; i < attrIds.length; i++) {
+            bytes32 id = attrIds[i];
 
-            if (uri == bytes32(0)) revert EmptyURI(URI_DOES_NOT_EXIST, i);
-            if (attributes[uri].signer != signer)
-                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, uri);
+            if (id == bytes32(0))
+                revert NonExistingAttribute(ID_DOES_NOT_EXIST, id, i);
+            if (_attribute[id].signer != signer)
+                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, id);
 
-            tokenAttributes[tokenId][uri] = values[i];
+            _value[tokenId][id] = values[i];
         }
 
-        emit AttributesUpdated(tokenId, uris, values);
+        emit AttributesUpdated(tokenId, attrIds, values);
     }
 }
