@@ -77,11 +77,7 @@ contract NFT_Test is Test, Errors {
     // `beforeEach` block
     function setUp() public {
         setupAddresses();
-<<<<<<< HEAD
-        setupAccessManager_external();
-=======
         setupAccessManager();
->>>>>>> moreTests
         setupSignersRegister();
         setupTestContracts();
     }
@@ -341,8 +337,6 @@ contract NFT_Test is Test, Errors {
             )
         );
         nft_.setAttributes(data, signature);
-<<<<<<< HEAD
-=======
     }
 
     function test_setAttributes_forced_happy_path() public {
@@ -389,7 +383,6 @@ contract NFT_Test is Test, Errors {
             )
         );
         nft_.setAttributes(NFT_ID_1, uris, values);
->>>>>>> moreTests
     }
 
     function sign(
