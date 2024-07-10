@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity 0.8.17;
 
 /// @title EIP-721 Multi-Metdata Extension
 ///  Note: the ERC-165 identifier for this interface is 0x06e1bc5b.

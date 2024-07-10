@@ -8,7 +8,7 @@ import "./utils/Errors.sol";
 
 import "forge-std/console.sol";
 
-contract SignersRegister is Errors, AccessManaged {
+contract Utils is Errors {
     using ECDSA for bytes32;
 
     // Studio can have many managers, but only one BackEnd signer

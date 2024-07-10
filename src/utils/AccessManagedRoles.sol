@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity 0.8.17;
 
 /**
  * @dev Futureverse Swappable - Roles for testing Access Managed contract

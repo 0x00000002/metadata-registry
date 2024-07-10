@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -8,7 +8,7 @@ import "./utils/Errors.sol";
 import "./SignersRegister.sol";
 import "./MultipleURIs.sol";
 
-contract DynamicAttributes is Errors, AccessManaged, MultipleURIs {
+contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
     using ECDSA for bytes32;
 
     struct Attribute {
