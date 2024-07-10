@@ -6,10 +6,12 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./utils/Errors.sol";
 import "./SignersRegister.sol";
-import "./MultipleURIs.sol";
+import "./ERC7160.sol";
 
-contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
+contract AttributesRegister is Errors, AccessManaged, ERC7160 {
     using ECDSA for bytes32;
+
+    SignersRegister private _sr;
 
     struct Attribute {
         address signer;
@@ -31,10 +33,9 @@ contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
         uint256[] attrValues
     );
 
-    constructor(
-        address manager_,
-        address register_
-    ) MultipleURIs(register_) AccessManaged(manager_) {}
+    constructor(address manager_, address register_) AccessManaged(manager_) {
+        _sr = SignersRegister(register_);
+    }
 
     function getAttribute(
         bytes32 attrId
@@ -62,7 +63,7 @@ contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
     function addAttributes(
         Attribute[] calldata attrs
     ) public restricted returns (bytes32[] memory attrIds) {
-        bytes32 studio = _register.getName(msg.sender);
+        bytes32 studio = _sr.getName(msg.sender);
         attrIds = _addAttributes(studio, attrs);
     }
 
@@ -74,7 +75,7 @@ contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
      * @dev Can be called by anyone with a valid signed data
      */
     function setAttributes(bytes memory data, bytes memory signature) public {
-        address signer = _register.validateSignature(data, signature);
+        address signer = _sr.validateSignature(data, signature);
 
         (
             uint256 tokenId,
@@ -94,12 +95,7 @@ contract AttributesRegister is Errors, AccessManaged, MultipleURIs {
         bytes32[] calldata attrIds,
         uint256[] calldata values
     ) public restricted {
-        _setAttributes(
-            tokenId,
-            attrIds,
-            values,
-            _register.getSigner(msg.sender)
-        );
+        _setAttributes(tokenId, attrIds, values, _sr.getSigner(msg.sender));
     }
 
     /**

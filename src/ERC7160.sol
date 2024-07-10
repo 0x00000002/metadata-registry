@@ -9,9 +9,7 @@ import "./SignersRegister.sol";
 import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
-contract MultipleURIs is Errors, IERC7160 {
-    SignersRegister internal _register;
-
+contract ERC7160 is Errors, IERC7160 {
     // See: https://github.com/multiformats/multihash
     // IFPS URI = hash_function + size + hash
     struct Version {
@@ -23,10 +21,6 @@ contract MultipleURIs is Errors, IERC7160 {
     }
 
     mapping(uint256 => Version) public versions;
-
-    constructor(address register) {
-        _register = SignersRegister(register);
-    }
 
     function supportsInterface(
         bytes4 interfaceId

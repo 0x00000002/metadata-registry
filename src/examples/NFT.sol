@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import "../MultipleURIs.sol";
+import "../ERC7160.sol";
 import "../AttributesRegister.sol";
 import "../utils/Errors.sol";
 
@@ -28,9 +28,10 @@ contract NFT is ERC721, AttributesRegister {
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC721, MultipleURIs) returns (bool) {
+    ) public view virtual override(ERC721, ERC7160) returns (bool) {
         return
             interfaceId == type(IERC721).interfaceId ||
+            interfaceId == type(IERC7160).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 

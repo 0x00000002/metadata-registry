@@ -5,15 +5,14 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import "forge-std/console.sol";
-
 contract Cryptography {
     using ECDSA for bytes32;
 
     /**
-     * @notice To validate the `signature` is signed by the _signer
-     * @param data signed message
-     * @param signature The signature passed from the caller
+     * @notice To verify that data was signed by the signer
+     * @param signer The address who (presumably) signed the message
+     * @param data message to sign
+     * @param signature The signature passed from the caller (signed message)
      * @return bool if the signer is the address who signed the message
      */
     function verifySignature(
@@ -21,16 +20,13 @@ contract Cryptography {
         bytes calldata data,
         bytes calldata signature
     ) public pure returns (bool) {
-        bytes32 messageHash = _hash(data);
-        bytes32 ethSignedMessageHash = _getEthSignedMessageHash(messageHash);
-        address _signer = ethSignedMessageHash.recover(signature);
-
-        return signer == _signer;
+        address signer_ = extractSigner(data, signature);
+        return signer == signer_;
     }
 
     /**
-     * @notice To validate the `signature` is signed by the _signer
-     * @param data signed message
+     * @notice Extracts signer from the signed message
+     * @param data message to sign
      * @param signature The signature passed from the caller
      * @return signer The signer address
      */
@@ -44,7 +40,7 @@ contract Cryptography {
     }
 
     /**
-     * @notice To validate the `signature` is signed by the _signer
+     * @notice Extracts signer from the signed message
      * @param msgHash The encoded hash used for signature
      * @param signature The signature passed from the caller
      * @return signer The address who signed the message

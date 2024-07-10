@@ -5,7 +5,7 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-interface IERC4906 is IERC165, IERC721 {
+interface IERC4906 is IERC165 {
     /// @dev This event emits when the metadata of a token is changed.
     /// So that the third-party platforms such as NFT market could
     /// timely update the images and related attributes of the NFT.
