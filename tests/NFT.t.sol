@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
@@ -191,7 +191,7 @@ contract NFT_Test is Test, Errors {
         selectors[0] = nft_.addAttributes.selector;
         selectors[1] = 0xa89fed51; // there are two setAttributes functions
         // therefore, nft_.setAttributes.selector won't work
-        // you can find its selectors by `forge selectors ls DynamicAttributes`
+        // you can find its selectors by `forge selectors ls AttributesRegister`
         // or use abi.encodeCall and get the first 4 bytes of the result
 
         vm.startPrank(admin);
@@ -280,10 +280,10 @@ contract NFT_Test is Test, Errors {
     }
 
     function test_setAttributesWithSignature_happy_path() public {
-        DynamicAttributes.Attribute[]
-            memory attrs = new DynamicAttributes.Attribute[](1);
+        AttributesRegister.Attribute[]
+            memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STRENGTH");
+        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STRENGTH");
 
         vm.startPrank(aStudio_1);
         bytes32[] memory uris = nft_.addAttributes(attrs);
@@ -301,10 +301,10 @@ contract NFT_Test is Test, Errors {
     }
 
     function test_setAttributesWithSignature_wrong_owner() public {
-        DynamicAttributes.Attribute[]
-            memory attrs = new DynamicAttributes.Attribute[](1);
+        AttributesRegister.Attribute[]
+            memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
 
         vm.prank(aStudio_1);
         bytes32[] memory uris = nft_.addAttributes(attrs);
@@ -340,10 +340,10 @@ contract NFT_Test is Test, Errors {
     }
 
     function test_setAttributes_forced_happy_path() public {
-        DynamicAttributes.Attribute[]
-            memory attrs = new DynamicAttributes.Attribute[](1);
+        AttributesRegister.Attribute[]
+            memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
 
         vm.startPrank(aStudio_1);
         bytes32[] memory uris = nft_.addAttributes(attrs);
@@ -354,10 +354,10 @@ contract NFT_Test is Test, Errors {
     }
 
     function test_setAttributes_forced_wrong_owner() public {
-        DynamicAttributes.Attribute[]
-            memory attrs = new DynamicAttributes.Attribute[](1);
+        AttributesRegister.Attribute[]
+            memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = DynamicAttributes.Attribute(studio_1_signer, "STAMINA");
+        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
 
         vm.prank(aStudio_1);
         bytes32[] memory uris = nft_.addAttributes(attrs);

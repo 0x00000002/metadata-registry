@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -8,7 +8,7 @@ import "./utils/Errors.sol";
 
 import "forge-std/console.sol";
 
-contract Utils is Errors {
+contract Utils is Errors, AccessManaged {
     using ECDSA for bytes32;
 
     // Studio can have many managers, but only one BackEnd signer

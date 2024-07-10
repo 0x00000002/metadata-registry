@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "../MultipleURIs.sol";
-import "../DynamicAttributes.sol";
+import "../AttributesRegister.sol";
 import "../utils/Errors.sol";
 
 // import "forge-std/console.sol";
@@ -15,13 +15,13 @@ import "../utils/Errors.sol";
 /**
  * @dev Futureverse Swappable - An example of ERC721 IMintable contract
  */
-contract NFT is ERC721, DynamicAttributes {
+contract NFT is ERC721, AttributesRegister {
     constructor(
         string memory token_,
         string memory name_,
         address manager,
         address register
-    ) ERC721(name_, token_) DynamicAttributes(manager, register) {}
+    ) ERC721(name_, token_) AttributesRegister(manager, register) {}
 
     /**
      * @dev See {IERC165-supportsInterface}.
