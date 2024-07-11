@@ -4,12 +4,11 @@ pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./utils/Errors.sol";
 import "./SignersRegister.sol";
 import "./interfaces/IERC7160.sol";
 import "./interfaces/IERC4906.sol";
 
-contract ERC7160 is Errors, IERC7160 {
+contract ERC7160 is IERC7160 {
     // See: https://github.com/multiformats/multihash
     // IFPS URI = hash_function + size + hash
     struct Version {
@@ -45,22 +44,6 @@ contract ERC7160 is Errors, IERC7160 {
         returns (uint256 index, string[] memory uris, bool pinned)
     {}
 
-    /// @notice Pin a specific token uri for a particular token
-    /// @dev This call MUST revert if the token does not exist
-    /// @dev This call MUST emit a `TokenUriPinned` event
-    /// @dev This call MAY emit a `MetadataUpdate` event from ERC-4096
-    /// @param tokenId The identifier of the nft
-    /// @param index The index in the string array returned from the `tokenURIs` function that should be pinned
-    function pinTokenURI(uint256 tokenId, uint256 index) external {}
-
-    /// @notice Unpin metadata for a particular token
-    /// @dev This call MUST revert if the token does not exist
-    /// @dev This call MUST emit a `TokenUriUnpinned` event
-    /// @dev This call MAY emit a `MetadataUpdate` event from ERC-4096
-    /// @dev It is up to the developer to define what this function does and is intentionally left open-ended
-    /// @param tokenId The identifier of the nft
-    function unpinTokenURI(uint256 tokenId) external {}
-
     /// @notice Check on-chain if a token id has a pinned uri or not
     /// @dev This call MUST revert if the token does not exist
     /// @dev Useful for on-chain mechanics that don't require the tokenURIs themselves
@@ -81,4 +64,8 @@ contract ERC7160 is Errors, IERC7160 {
                 )
             );
     }
+
+    function _pinTokenURI(uint256 tokenId, uint256 index) internal {}
+
+    function _unpinTokenURI(uint256 tokenId) internal {}
 }

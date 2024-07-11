@@ -3,10 +3,15 @@
 pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import "./utils/Errors.sol";
 import "./utils/Cryptography.sol";
 
-contract SignersRegister is Cryptography, Errors, AccessManaged {
+string constant UNKNOWN_SIGNER = "Unknown signer";
+string constant INVALID_ADDRESS = "Invalid address";
+string constant STUDIO_EXISTS = "Studio exist";
+
+error InvalidSigner(string errMsg);
+
+contract SignersRegister is Cryptography, AccessManaged {
     // Studio can have many managers, but only one BackEnd signer
     mapping(address account => bytes32 studioName) private _name;
     mapping(address account => address signer) private _signer;
@@ -44,7 +49,7 @@ contract SignersRegister is Cryptography, Errors, AccessManaged {
         bytes calldata signature
     ) public view returns (address signer) {
         signer = extractSigner(data, signature);
-        if (!_status[signer]) revert InvalidInput(UNKNOWN_SIGNER);
+        if (!_status[signer]) revert InvalidSigner(UNKNOWN_SIGNER);
     }
 
     /**
@@ -63,8 +68,8 @@ contract SignersRegister is Cryptography, Errors, AccessManaged {
         external
         restricted // we can pass signed message here instead of `restricted`
     {
-        if (acc == address(0)) revert InvalidInput(INVALID_ADDRESS);
-        if (_name[acc] != bytes32(0)) revert InvalidInput(STUDIO_EXISTS);
+        if (acc == address(0)) revert InvalidSigner(INVALID_ADDRESS);
+        if (_name[acc] != bytes32(0)) revert InvalidSigner(STUDIO_EXISTS);
         _name[acc] = name;
         _signer[acc] = signer;
         _status[signer] = status;

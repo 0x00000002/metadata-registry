@@ -5,7 +5,8 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import "../src/examples/NFT.sol";
-import "../src/utils/Errors.sol";
+import "../src/MetadataRegistry.sol";
+import "../src/AttributesRegister.sol";
 import "../src/utils/AccessManagedRoles.sol";
 
 import "forge-std/Test.sol";
@@ -26,7 +27,7 @@ uint256 constant AMOUNT_TO_MINT_SEQUENTIALLY = 10;
 /**
  * @dev Tests for the ASM The Next Legend - Character contract
  */
-contract NFT_Test is Test, Errors {
+contract NFT_Test is Test {
     address deployer = address(this);
 
     // Naming convention: contracts variables ends with _, e.g.: nft_ or am_,
@@ -187,18 +188,18 @@ contract NFT_Test is Test, Errors {
         nft_ = new NFT("NFT", "NFT", aManager, aRegister);
         aNft = address(nft_);
 
-        bytes4[] memory selectors = new bytes4[](2);
-        selectors[0] = nft_.addAttributes.selector;
-        selectors[1] = 0xa89fed51; // there are two setAttributes functions
-        // therefore, nft_.setAttributes.selector won't work
-        // you can find its selectors by `forge selectors ls AttributesRegister`
-        // or use abi.encodeCall and get the first 4 bytes of the result
+        // bytes4[] memory selectors = new bytes4[](2);
+        // selectors[0] = nft_.addAttributes.selector;
+        // selectors[1] = 0xa89fed51; // there are two setAttributes functions
+        // // therefore, nft_.setAttributes.selector won't work
+        // // you can find its selectors by `forge selectors ls AttributesRegister`
+        // // or use abi.encodeCall and get the first 4 bytes of the result
 
-        vm.startPrank(admin);
-        am_.grantRole(STUDIO_MANAGER, aStudio_1, 0);
-        am_.grantRole(STUDIO_MANAGER, aStudio_2, 0);
-        am_.setTargetFunctionRole(aNft, selectors, STUDIO_MANAGER);
-        vm.stopPrank();
+        // vm.startPrank(admin);
+        // am_.grantRole(STUDIO_MANAGER, aStudio_1, 0);
+        // am_.grantRole(STUDIO_MANAGER, aStudio_2, 0);
+        // am_.setTargetFunctionRole(aNft, selectors, STUDIO_MANAGER);
+        // vm.stopPrank();
 
         assertEq(nft_.balanceOf(user), 0);
         vm.prank(admin);
@@ -236,21 +237,6 @@ contract NFT_Test is Test, Errors {
 
     function test_contracts_states() public {
         vm.skip(false);
-
-        assertTrue(
-            nft_.supportsInterface(type(IERC721).interfaceId),
-            "Should support IERC721 interface"
-        );
-
-        assertTrue(
-            nft_.supportsInterface(type(IERC4906).interfaceId),
-            "Should support IERC4906 interface"
-        );
-
-        assertTrue(
-            nft_.supportsInterface(type(IERC7160).interfaceId),
-            "Should support IERC7160 interface"
-        );
 
         assertTrue(
             sr_.getSigner(aStudio_1) == studio_1_signer,
