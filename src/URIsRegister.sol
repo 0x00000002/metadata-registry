@@ -13,7 +13,7 @@ string constant IPFS_URI = "ipfs://";
 error UriExists(bytes32 token, bytes32 label);
 error LabelExists(address contractAddress, bytes32 label);
 
-contract URIRegister is IPFS {
+contract URIsRegister is IPFS {
     /**
      * @notice Token can have multiple URIs, and we use labels to differentiate them.
      * @notice Labels are used by creators to "mark" their URIs.
