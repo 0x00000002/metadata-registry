@@ -6,13 +6,9 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./SignersRegister.sol";
 import "./AttributesRegister.sol";
-import "./MetadataRegister.sol";
+import "./URIRegister.sol";
 
-contract MetadataRegistry is
-    AttributesRegister,
-    MetadataRegister,
-    AccessManaged
-{
+contract MetadataRegistry is AttributesRegister, URIRegister, AccessManaged {
     SignersRegister private _sr;
 
     constructor(address manager_, address register_) AccessManaged(manager_) {
@@ -37,6 +33,8 @@ contract MetadataRegistry is
         uint256 indexed tokenId
     );
 
+    // ! ----------------- Attributes functions -----------------
+
     /**
      * @notice This function returns the list of attributes for a given token.
      * @param tokenContract The address of the token contract
@@ -44,7 +42,7 @@ contract MetadataRegistry is
      */
     function getAttributesList(
         address tokenContract
-    ) public view returns (bytes32[] memory attrIds) {
+    ) external view returns (bytes32[] memory attrIds) {
         return _getAttriibuteList(tokenContract);
     }
 
@@ -55,7 +53,7 @@ contract MetadataRegistry is
      */
     function getAttribute(
         bytes32 attrId
-    ) public view returns (Attribute memory) {
+    ) external view returns (Attribute memory) {
         return _getAttribute(attrId);
     }
 
@@ -66,7 +64,7 @@ contract MetadataRegistry is
      */
     function getAttributes(
         bytes32[] memory attrIds
-    ) public view returns (Attribute[] memory attrs) {
+    ) external view returns (Attribute[] memory attrs) {
         attrs = new Attribute[](attrIds.length);
         for (uint256 i = 0; i < attrIds.length; i++) {
             attrs[i] = _getAttribute(attrIds[i]);
@@ -82,7 +80,7 @@ contract MetadataRegistry is
     function addAttributes(
         address tokenContract,
         Attribute[] calldata attrs
-    ) public restricted returns (bytes32[] memory attrIds) {
+    ) external restricted returns (bytes32[] memory attrIds) {
         attrIds = _addAttributes(tokenContract, attrs);
         emit AttributesAdded(tokenContract, attrIds);
     }
@@ -95,7 +93,7 @@ contract MetadataRegistry is
      * @param signature The signature
      * @dev Can be called by anyone with a valid signed data
      */
-    function setAttributes(bytes memory data, bytes memory signature) public {
+    function setAttributes(bytes memory data, bytes memory signature) external {
         address signer = _sr.validateSignature(data, signature);
         (bytes32[] memory attrIds, uint256[] memory values) = abi.decode(
             data,
@@ -114,7 +112,7 @@ contract MetadataRegistry is
     function setAttributes(
         bytes32[] calldata attrIds,
         uint256[] calldata values
-    ) public restricted {
+    ) external restricted {
         address signer = _sr.getSigner(msg.sender);
         _setAttributes(attrIds, values, signer);
     }
@@ -128,7 +126,7 @@ contract MetadataRegistry is
     function changeAttributeSigner(
         bytes32[] calldata attrIds,
         address[] memory newSigners
-    ) public restricted {
+    ) external restricted {
         uint256 total = attrIds.length;
         if (attrIds.length != newSigners.length)
             revert InvalidAttributesArrays(
@@ -142,6 +140,55 @@ contract MetadataRegistry is
         }
     }
 
+    // ! ----------------- URI functions -----------------
+
+    /**
+     * @notice Get all token uris associated with a particular token
+     * @param contractAddress The address of the contract
+     * @param tokenId The identifier for the token
+     * @param label The identifier for the uri
+     * @return uri string
+     */
+    function tokenURI(
+        address contractAddress,
+        uint256 tokenId,
+        bytes32 label
+    ) external view returns (string memory) {
+        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
+        return _getURI(token, label);
+    }
+
+    /**
+     * @notice Add a new label to the contract
+     * @param contractAddress The address of the contract
+     * @param label The identifier for the uri
+     * @dev Can be called only by pre-approved accounts (studios/creators)
+     */
+    function addLabel(
+        address contractAddress,
+        bytes32 label
+    ) external restricted {
+        _addLabel(contractAddress, label);
+    }
+
+    /**
+     * @notice This function sets the URI for a given token.
+     * @param contractAddress The address of the contract
+     * @param tokenId The identifier for the token
+     * @param label The identifier for the uri
+     * @dev Can be called only by pre-approved accounts (studios/creators)
+     */
+    function addURI(
+        address contractAddress,
+        uint256 tokenId,
+        bytes32 label
+    ) external restricted {
+        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
+        _setUri(token, label);
+    }
+
+    // ! ----------------- Private functions -----------------
+
     /**
      * @notice This function updates the value of an attribute for a given token.
      * @param attrIds Array of attribute IDs
@@ -151,7 +198,7 @@ contract MetadataRegistry is
         bytes32[] memory attrIds,
         uint256[] memory values,
         address signer
-    ) internal {
+    ) private {
         uint256 total = attrIds.length;
         if (values.length != total)
             revert InvalidAttributesArrays(
@@ -162,40 +209,5 @@ contract MetadataRegistry is
         for (uint256 i = 0; i < total; i++) {
             _setAttribute(attrIds[i], values[i], signer);
         }
-    }
-
-    /**
-     * @notice The following functions are inspired by the ERC-7160
-     * @notice although they have altered signatures
-     * @notice to accommodate `collectionId` and the fact that
-     * @notice the pinned tokenURIs are stored in the registry,
-     * @notice not in the token contract
-     */
-
-    /**
-     * @notice Pin a specific token URI
-     * @param contractAddress The address of the contract
-     * @param tokenId The identifier of the token
-     * @param index The index in the URIs array that should be pinned
-     */
-    function pinTokenURI(
-        address contractAddress,
-        uint256 tokenId,
-        uint32 index
-    ) external {
-        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
-        _pinTokenURI(token, index);
-        emit TokenUriPinned(contractAddress, tokenId, index);
-    }
-
-    /**
-     * @notice Unpin metadata URI for a particular token
-     * @param contractAddress The address of the contract
-     * @param tokenId The identifier of the token
-     */
-    function unpinTokenURI(address contractAddress, uint256 tokenId) external {
-        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
-        _unpinTokenURI(token);
-        emit TokenUriUnpinned(contractAddress, tokenId);
     }
 }
