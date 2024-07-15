@@ -11,7 +11,6 @@ string constant ARRAYS_LENGTHS_MISMATCH = "Array lengths mismatch";
 
 error InvalidAttribute(string errMsg, bytes32 attrId);
 error InvalidAttributesArrays(string errMsg, uint256 length1, uint256 length2);
-error NonExistingAttribute(string errMsg, bytes32 attrId, uint256 idx);
 
 contract AttributesRegister {
     /**
@@ -29,18 +28,6 @@ contract AttributesRegister {
 
     mapping(bytes32 attrId => Attribute) private _attribute;
     mapping(address tokenContract => bytes32[]) private _tokenAttributes;
-
-    event AttributesAdded(
-        address indexed tokenContract,
-        bytes32[] attrNames,
-        bytes32[] attrIds
-    );
-    event AttributesUpdated(
-        address indexed tokenContract,
-        uint32 indexed tokenId,
-        bytes32[] indexed attrIds,
-        uint256[] attrValues
-    );
 
     function _getAttribute(
         bytes32 attrId
@@ -85,48 +72,26 @@ contract AttributesRegister {
             _tokenAttributes[tokenContract].push(id);
         }
 
-        emit AttributesAdded(tokenContract, names, attrIds);
         return attrIds;
     }
 
-    function _setAttributes(
-        address tokenContract,
-        uint32 tokenId,
-        bytes32[] memory attrIds,
-        uint256[] memory values,
+    function _setAttribute(
+        bytes32 attrId,
+        uint256 value,
         address signer
     ) internal {
-        uint256 total = attrIds.length;
-        if (values.length != total)
-            revert InvalidAttributesArrays(
-                ID_VALUES_MISMATCH,
-                attrIds.length,
-                values.length
-            );
-
-        for (uint256 i = 0; i < total; i++) {
-            bytes32 id = attrIds[i];
-
-            if (id == bytes32(0))
-                revert NonExistingAttribute(ATTRIBUTE_NOT_EXIST, id, i);
-            if (_attribute[id].signer != signer)
-                revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, id);
-
-            _attribute[id] = Attribute({
-                name: _attribute[id].name,
-                value: values[i],
-                signer: signer
-            });
+        if (_attribute[attrId].signer == signer)
+            _attribute[attrId].value = value;
+        else {
+            revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }
-
-        emit AttributesUpdated(tokenContract, tokenId, attrIds, values);
     }
 
     function _setAttributeOwner(bytes32 attrId, address newSigner) internal {
         if (_attribute[attrId].signer > address(0))
             _attribute[attrId].signer = newSigner;
         else {
-            revert NonExistingAttribute(ATTRIBUTE_NOT_EXIST, attrId, 0);
+            revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }
     }
 }

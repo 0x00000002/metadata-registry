@@ -12,26 +12,15 @@ string constant STUDIO_EXISTS = "Studio exist";
 error InvalidSigner(string errMsg);
 
 contract SignersRegister is Cryptography, AccessManaged {
-    // Studio can have many managers, but only one BackEnd signer
-    mapping(address account => bytes32 studioName) private _name;
-    mapping(address account => address signer) private _signer;
-    mapping(address signer => bool status) private _status;
+    mapping(address acc => address) private _signer;
+    mapping(address signer => bool) private _status;
 
-    event SignerUpdated(
-        bytes32 indexed name, // bytes32(abi.encodePacked(studioName))
-        address indexed acc,
-        address indexed signer,
-        bool status
-    );
+    event SignerSet(address indexed acc, address indexed signer, bool status);
 
     constructor(address manager) AccessManaged(manager) {}
 
     function getSigner(address acc) external view returns (address) {
         return _signer[acc];
-    }
-
-    function getName(address acc) external view returns (bytes32) {
-        return _name[acc];
     }
 
     function isSigner(address acc) external view returns (bool) {
@@ -59,20 +48,15 @@ contract SignersRegister is Cryptography, AccessManaged {
      * @param status true/false = active/inactive
      * @dev This function can only be called by FV admins
      */
-    function update(
-        bytes32 name,
+    function setSigner(
         address acc,
         address signer,
         bool status
-    )
-        external
-        restricted // we can pass signed message here instead of `restricted`
-    {
+    ) external restricted {
         if (acc == address(0)) revert InvalidSigner(INVALID_ADDRESS);
-        if (_name[acc] != bytes32(0)) revert InvalidSigner(STUDIO_EXISTS);
-        _name[acc] = name;
         _signer[acc] = signer;
         _status[signer] = status;
-        emit SignerUpdated(name, acc, signer, status);
+
+        emit SignerSet(acc, signer, status);
     }
 }
