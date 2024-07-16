@@ -39,7 +39,7 @@ contract URIsRegister is IPFS {
         bytes32 token,
         bytes32 label
     ) internal view returns (string memory) {
-        return cidv0(_digest[token][label]);
+        return string(abi.encodePacked(IPFS_URI, cidv0(_digest[token][label])));
     }
 
     /**
@@ -71,11 +71,12 @@ contract URIsRegister is IPFS {
      * @notice This function sets the URI for a given token.
      * @param token The identifier for the token
      * @param label The identifier for the uri
+     * @param digest The IPFS digest (sha2-256 hash) of the file
      * @dev Can be called only by pre-approved accounts (studios/creators)
      */
-    function _setUri(bytes32 token, bytes32 label) internal {
+    function _setUri(bytes32 token, bytes32 label, bytes32 digest) internal {
         if (_digest[token][label] > 0) revert UriExists(token, label);
 
-        _digest[token][label] = keccak256(abi.encodePacked(token, label));
+        _digest[token][label] = digest;
     }
 }

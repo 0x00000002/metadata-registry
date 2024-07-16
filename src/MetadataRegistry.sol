@@ -6,9 +6,11 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./SignersRegister.sol";
 import "./AttributesRegister.sol";
-import "./URIRegister.sol";
+import "./URIsRegister.sol";
 
-contract MetadataRegistry is AttributesRegister, URIRegister, AccessManaged {
+import "forge-std/console.sol"; // TODO: remove it
+
+contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
     SignersRegister private _sr;
 
     constructor(address manager_, address register_) AccessManaged(manager_) {
@@ -181,10 +183,11 @@ contract MetadataRegistry is AttributesRegister, URIRegister, AccessManaged {
     function addURI(
         address contractAddress,
         uint256 tokenId,
-        bytes32 label
+        bytes32 label,
+        bytes32 digest
     ) external restricted {
         bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
-        _setUri(token, label);
+        _setUri(token, label, digest);
     }
 
     // ! ----------------- Private functions -----------------

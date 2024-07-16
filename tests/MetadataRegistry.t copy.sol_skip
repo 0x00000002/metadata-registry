@@ -33,8 +33,10 @@ contract NFT_Test is Test {
     // Naming convention: contracts variables ends with _, e.g.: nft_ or am_,
     // and their addresses starts with `a`, e.g.: aNft or aManager
     NFT nft_;
+    MetadataRegistry mr_;
     AccessManager am_;
     SignersRegister sr_;
+
     address aManager;
     address aRegister;
     address aNft;
@@ -48,10 +50,9 @@ contract NFT_Test is Test {
     address studio_2_signer;
     address aStudio_1;
     address aStudio_2;
-    string studio_1_name = "Studio 1";
-    string studio_2_name = "Studio 2";
-    bytes32 studio_1 = bytes32(abi.encodePacked(studio_1_name));
-    bytes32 studio_2 = bytes32(abi.encodePacked(studio_2_name));
+
+    bytes32 label1 = bytes32(abi.encodePacked("label1"));
+    bytes32 label2 = bytes32(abi.encodePacked("label2"));
     address sr_admin;
 
     uint256 signer1PK;
@@ -98,9 +99,6 @@ contract NFT_Test is Test {
         ms_signer_2 = makeAddr("ms_signer_2");
 
         sr_admin = makeAddr("sr_admin");
-
-        aStudio_1 = makeAddr(studio_1_name);
-        aStudio_2 = makeAddr(studio_2_name);
 
         (studio_1_signer, signer1PK) = makeAddrAndKey("studio_1_signer");
         (studio_2_signer, signer2PK) = makeAddrAndKey("studio_2_signer");
@@ -172,11 +170,11 @@ contract NFT_Test is Test {
         sr_ = new SignersRegister(aManager);
         aRegister = address(sr_);
 
-        sr_.update(studio_1, aStudio_1, studio_1_signer, true);
-        sr_.update(studio_2, aStudio_2, studio_2_signer, true);
+        sr_.setSigner(aStudio_1, studio_1_signer, true);
+        sr_.setSigner(aStudio_2, studio_2_signer, true);
 
         bytes4[] memory selectors = new bytes4[](1);
-        selectors[0] = sr_.update.selector;
+        selectors[0] = sr_.setSigner.selector;
 
         vm.startPrank(admin);
         am_.grantRole(FV_SR_MANAGER, sr_admin, 1 hours);
@@ -188,10 +186,12 @@ contract NFT_Test is Test {
         nft_ = new NFT("NFT", "NFT", aManager, aRegister);
         aNft = address(nft_);
 
+        mr_ = new MetadataRegistry(aManager, aRegister);
+
         // bytes4[] memory selectors = new bytes4[](2);
-        // selectors[0] = nft_.addAttributes.selector;
+        // selectors[0] = mr_.addAttributes.selector;
         // selectors[1] = 0xa89fed51; // there are two setAttributes functions
-        // // therefore, nft_.setAttributes.selector won't work
+        // // therefore, mr_.setAttributes.selector won't work
         // // you can find its selectors by `forge selectors ls AttributesRegister`
         // // or use abi.encodeCall and get the first 4 bytes of the result
 
@@ -269,10 +269,14 @@ contract NFT_Test is Test {
         AttributesRegister.Attribute[]
             memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STRENGTH");
+        attrs[0] = AttributesRegister.Attribute(
+            bytes32(abi.encodePacked("STRENGTH")),
+            10,
+            studio_1_signer
+        );
 
         vm.startPrank(aStudio_1);
-        bytes32[] memory uris = nft_.addAttributes(attrs);
+        bytes32[] memory uris = mr_.addAttributes(attrs);
         uint256[] memory values = new uint256[](uris.length);
         values[0] = 100;
 
@@ -283,7 +287,7 @@ contract NFT_Test is Test {
             signer1PK
         );
 
-        nft_.setAttributes(data, signature);
+        mr_.setAttributes(data, signature);
     }
 
     function test_setAttributesWithSignature_wrong_owner() public {
@@ -293,7 +297,7 @@ contract NFT_Test is Test {
         attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
 
         vm.prank(aStudio_1);
-        bytes32[] memory uris = nft_.addAttributes(attrs);
+        bytes32[] memory uris = mr_.addAttributes(attrs);
         uint256[] memory values = new uint256[](uris.length);
         values[0] = 100;
 
@@ -304,38 +308,36 @@ contract NFT_Test is Test {
             signer2PK
         );
 
-        bytes32[] memory list = nft_.getAttributesList();
+        bytes32[] memory list = mr_.getAttributesList();
 
         assertTrue(list.length == 1, "Should have 1 attribute");
         assertEq(
             list[0],
-            keccak256(
-                abi.encodePacked(studio_1, bytes32(abi.encodePacked("STAMINA")))
-            )
+            keccak256(abi.encodePacked(bytes32(abi.encodePacked("STAMINA"))))
         );
 
         vm.prank(aStudio_2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Errors.InvalidAttribute.selector,
+                AttributesRegister.InvalidAttribute.selector,
                 WRONG_ATTRIBUTE_OWNER,
                 uris[0]
             )
         );
-        nft_.setAttributes(data, signature);
+        mr_.setAttributes(data, signature);
     }
 
     function test_setAttributes_forced_happy_path() public {
         AttributesRegister.Attribute[]
             memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
+        attrs[0] = AttributesRegister.Attribute("STAMINA", 5, studio_1_signer);
 
         vm.startPrank(aStudio_1);
-        bytes32[] memory uris = nft_.addAttributes(attrs);
+        bytes32[] memory uris = mr_.addAttributes(aNft, attrs);
         uint256[] memory values = new uint256[](uris.length);
         values[0] = 100;
-        nft_.setAttributes(NFT_ID_1, uris, values);
+        mr_.setAttributes(uris, values);
         vm.stopPrank();
     }
 
@@ -343,32 +345,30 @@ contract NFT_Test is Test {
         AttributesRegister.Attribute[]
             memory attrs = new AttributesRegister.Attribute[](1);
 
-        attrs[0] = AttributesRegister.Attribute(studio_1_signer, "STAMINA");
+        attrs[0] = AttributesRegister.Attribute("STAMINA", 7, studio_1_signer);
 
         vm.prank(aStudio_1);
-        bytes32[] memory uris = nft_.addAttributes(attrs);
+        bytes32[] memory uris = mr_.addAttributes(aNft, attrs);
         uint256[] memory values = new uint256[](uris.length);
         values[0] = 100;
 
-        bytes32[] memory list = nft_.getAttributesList();
+        bytes32[] memory list = mr_.getAttributesList(aNft);
 
         assertTrue(list.length == 1, "Should have 1 attribute");
         assertEq(
             list[0],
-            keccak256(
-                abi.encodePacked(studio_1, bytes32(abi.encodePacked("STAMINA")))
-            )
+            keccak256(abi.encodePacked(bytes32(abi.encodePacked("STAMINA"))))
         );
 
         vm.prank(aStudio_2);
         vm.expectRevert(
             abi.encodeWithSelector(
-                Errors.InvalidAttribute.selector,
+                AttributesRegister.InvalidAttribute.selector,
                 WRONG_ATTRIBUTE_OWNER,
                 uris[0]
             )
         );
-        nft_.setAttributes(NFT_ID_1, uris, values);
+        mr_.setAttributes(uris, values);
     }
 
     function sign(

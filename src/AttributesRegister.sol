@@ -9,9 +9,6 @@ string constant ID_VALUES_MISMATCH = "Attr IDs/values length mismatch";
 string constant WRONG_ATTRIBUTE_OWNER = "Wrong attribute owner";
 string constant ARRAYS_LENGTHS_MISMATCH = "Array lengths mismatch";
 
-error InvalidAttribute(string errMsg, bytes32 attrId);
-error InvalidAttributesArrays(string errMsg, uint256 length1, uint256 length2);
-
 contract AttributesRegister {
     /**
      * @notice Each Attribute has its ID,
@@ -28,6 +25,13 @@ contract AttributesRegister {
 
     mapping(bytes32 attrId => Attribute) private _attribute;
     mapping(address tokenContract => bytes32[]) private _tokenAttributes;
+
+    error InvalidAttribute(string errMsg, bytes32 attrId);
+    error InvalidAttributesArrays(
+        string errMsg,
+        uint256 length1,
+        uint256 length2
+    );
 
     function _getAttribute(
         bytes32 attrId
