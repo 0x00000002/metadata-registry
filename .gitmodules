@@ -7,3 +7,6 @@
 [submodule "lib/ipfs-cid-solidity"]
 	path = lib/ipfs-cid-solidity
 	url = https://github.com/0x00000002/ipfs-cid-solidity
+[submodule "lib/base58-solidity"]
+	path = lib/base58-solidity
+	url = https://github.com/storyicon/base58-solidity
