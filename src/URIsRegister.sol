@@ -6,7 +6,8 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./SignersRegister.sol";
-import "./utils/IPFS.sol";
+import "ipfs-cid-solidity/Base32.sol";
+import "ipfs-cid-solidity/IPFS.sol";
 
 string constant IPFS_URI = "ipfs://";
 
@@ -39,7 +40,7 @@ contract URIsRegister is IPFS {
         bytes32 token,
         bytes32 label
     ) internal view returns (string memory) {
-        return string(abi.encodePacked(IPFS_URI, cidv0(_digest[token][label])));
+        return string(abi.encodePacked(IPFS_URI, cidv1(_digest[token][label])));
     }
 
     /**

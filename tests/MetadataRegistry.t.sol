@@ -8,13 +8,12 @@ import "../src/examples/NFT.sol";
 import "../src/MetadataRegistry.sol";
 import "../src/AttributesRegister.sol";
 import "../src/utils/AccessManagedRoles.sol";
-import "../src/utils/Base32Encoder.sol";
+import "@ipfs-cid-solidity/contracts/Base32.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 bytes32 constant label = keccak256("label");
-bytes32 constant digest = sha256("tknff");
 
 /**
  * @dev Tests for the ASM The Next Legend - Character contract
@@ -114,10 +113,5 @@ contract MRTest is Base32Encoder, Test {
         assertEq(uri, "ipfs://QmX9qyMvfYRfho16oYNDZbwHyrGRJPgZWxHX2PcqMkbs9M");
     }
 
-    function test_smthg() public view {
-        bytes
-            memory data = "6E6FF7950A36187A801613426E858DCE686CD7D7E3C0FC42EE0330072D245C95";
-        string memory encoded = encode(data);
-        console.log(encoded);
-    }
+    function test_smthg() public view {}
 }
