@@ -15,7 +15,6 @@ contract AttributesRegister {
      * @notice which is different from attribute's `name`
      * @notice to avoid collisions for different collections
      * @dev `name` is bytes32(abi.encodePacked(attributeName::string))
-     * @dev ID is keccak256(abi.encodePacked(tokenContract, name))
      */
     struct Attribute {
         bytes32 name;
@@ -23,10 +22,10 @@ contract AttributesRegister {
     }
 
     mapping(bytes32 attrId => Attribute) private _attributes;
-    mapping(bytes32 tokenId => bytes32[] attrId) private _tokenAttributes;
+    mapping(bytes32 MRTokenId => bytes32[] attrId) private _tokenAttributes;
     mapping(address tokenContract => bytes32[] attrId)
-        private _contractAttributes;
-    mapping(bytes32 tokenId => mapping(bytes32 attrId => uint256))
+        internal __contractAttributes;
+    mapping(bytes32 MRTokenId => mapping(bytes32 attrId => uint256))
         private _values;
 
     error InvalidAttribute(string errMsg, bytes32 attrId);
@@ -43,16 +42,16 @@ contract AttributesRegister {
     }
 
     function _getAttributeValue(
-        bytes32 tokenId,
+        bytes32 MRTokenId,
         bytes32 attrId
     ) internal view returns (uint256) {
-        return _values[tokenId][attrId];
+        return _values[MRTokenId][attrId];
     }
 
     function _getAttriibutesList(
         address tokenContract
     ) internal view returns (bytes32[] memory) {
-        return _contractAttributes[tokenContract];
+        return __contractAttributes[tokenContract];
     }
 
     /**
@@ -83,23 +82,23 @@ contract AttributesRegister {
             _attributes[id] = attrs[i];
             attrIds[i] = id;
             names[i] = attrs[i].name;
-            _contractAttributes[tokenContract].push(id);
+            __contractAttributes[tokenContract].push(id);
         }
 
         return attrIds;
     }
 
     function _setAttribute(
-        bytes32 tokenId,
+        bytes32 MRTokenId,
         bytes32 attrId,
         uint256 value,
         address signer
     ) internal {
         if (_attributes[attrId].signer == signer) {
-            if (_values[tokenId][attrId] == 0) {
-                _tokenAttributes[tokenId].push(attrId);
+            if (_values[MRTokenId][attrId] == 0) {
+                _tokenAttributes[MRTokenId].push(attrId);
             }
-            _values[tokenId][attrId] = value;
+            _values[MRTokenId][attrId] = value;
         } else {
             revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }

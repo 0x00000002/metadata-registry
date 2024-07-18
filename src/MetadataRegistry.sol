@@ -10,7 +10,7 @@ import "./URIsRegister.sol";
 
 import "forge-std/console.sol"; // TODO: remove it
 
-contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
+contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
     SignersRegister private _sr;
 
     constructor(address manager_, address register_) AccessManaged(manager_) {
@@ -54,7 +54,7 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
         bytes32 attrId
     ) external view returns (uint256) {
         return
-            _getAttributeValue(_getTokenId(contractAddress, tokenId), attrId);
+            _getAttributeValue(_getMRTokenId(contractAddress, tokenId), attrId);
     }
 
     /**
@@ -114,7 +114,7 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
         ) = abi.decode(data, (address, uint256, bytes32[], uint256[]));
 
         _setAttributes(
-            _getTokenId(contractAddress, tokenId),
+            _getMRTokenId(contractAddress, tokenId),
             attrIds,
             values,
             signer
@@ -134,7 +134,7 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
         uint256[] calldata values
     ) external restricted {
         _setAttributes(
-            _getTokenId(contractAddress, tokenId),
+            _getMRTokenId(contractAddress, tokenId),
             attrIds,
             values,
             _sr.getSigner(msg.sender)
@@ -180,19 +180,6 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
     ) external view returns (string memory) {
         bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
         return _getURI(token, label);
-    }
-
-    /**
-     * @notice Add a new label to the contract
-     * @param contractAddress The address of the contract
-     * @param label The identifier for the uri
-     * @dev Can be called only by pre-approved accounts (studios/creators)
-     */
-    function addLabel(
-        address contractAddress,
-        bytes32 label
-    ) external restricted {
-        _addLabel(contractAddress, label);
     }
 
     /**
@@ -243,7 +230,7 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
      * @param tokenId The contract's identifier for the token (uint256)
      * @return tokenId The unique, MetadataRegistry's token ID (bytes32)
      */
-    function _getTokenId(
+    function _getMRTokenId(
         address contractAddress,
         uint256 tokenId
     ) private pure returns (bytes32) {

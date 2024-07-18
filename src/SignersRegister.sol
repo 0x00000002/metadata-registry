@@ -12,7 +12,7 @@ string constant STUDIO_EXISTS = "Studio exist";
 error InvalidSigner(string errMsg);
 
 contract SignersRegister is Cryptography, AccessManaged {
-    mapping(address acc => address) private _signer;
+    mapping(address acc => address) private _signers;
     mapping(address signer => bool) private _status;
 
     event SignerSet(address indexed acc, address indexed signer, bool status);
@@ -20,7 +20,7 @@ contract SignersRegister is Cryptography, AccessManaged {
     constructor(address manager) AccessManaged(manager) {}
 
     function getSigner(address acc) external view returns (address) {
-        return _signer[acc];
+        return _signers[acc];
     }
 
     function isSigner(address acc) external view returns (bool) {
@@ -54,7 +54,7 @@ contract SignersRegister is Cryptography, AccessManaged {
         bool status
     ) external restricted {
         if (acc == address(0)) revert InvalidSigner(INVALID_ADDRESS);
-        _signer[acc] = signer;
+        _signers[acc] = signer;
         _status[signer] = status;
 
         emit SignerSet(acc, signer, status);
