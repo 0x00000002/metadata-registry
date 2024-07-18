@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./SignersRegister.sol";
-import "ipfs-cid-solidity/Base32.sol";
-import "ipfs-cid-solidity/IPFS.sol";
+import "@ipfs-cid-solidity/Base32.sol";
+import "@ipfs-cid-solidity/IPFS.sol";
 
 string constant IPFS_URI = "ipfs://";
 

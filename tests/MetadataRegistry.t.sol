@@ -8,17 +8,17 @@ import "../src/examples/NFT.sol";
 import "../src/MetadataRegistry.sol";
 import "../src/AttributesRegister.sol";
 import "../src/utils/AccessManagedRoles.sol";
-import "@ipfs-cid-solidity/contracts/Base32.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 bytes32 constant label = keccak256("label");
+bytes32 constant metatata = keccak256("metadata");
 
 /**
  * @dev Tests for the ASM The Next Legend - Character contract
  */
-contract MRTest is Base32Encoder, Test {
+contract MRTest is Test {
     // Naming convention: contracts variables ends with _, e.g.: nft_ or am_,
     // and their addresses starts with `a`, e.g.: aNft or aManager
 
@@ -56,9 +56,6 @@ contract MRTest is Base32Encoder, Test {
         setupAddresses();
         setupAccessManager();
         setupTestContracts();
-
-        console.logBytes32(label);
-        console.logBytes32(digest);
     }
 
     function setupAddresses() public {
@@ -106,11 +103,14 @@ contract MRTest is Base32Encoder, Test {
 
     function test_addURI() public {
         vm.prank(admin);
-        mr_.addURI(aNft, 1, label, digest);
+        mr_.addURI(aNft, 1, label, metatata);
 
         string memory uri = mr_.tokenURI(aNft, 1, label);
 
-        assertEq(uri, "ipfs://QmX9qyMvfYRfho16oYNDZbwHyrGRJPgZWxHX2PcqMkbs9M");
+        assertEq(
+            uri,
+            "ipfs://bafybeid2tu5agk4p6j2pbfyuwvv2rzpno5xmsy4mumbqng6dumthxmrpmu"
+        );
     }
 
     function test_smthg() public view {}
