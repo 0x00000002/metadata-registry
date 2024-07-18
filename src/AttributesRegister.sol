@@ -19,12 +19,15 @@ contract AttributesRegister {
      */
     struct Attribute {
         bytes32 name;
-        uint256 value;
         address signer;
     }
 
-    mapping(bytes32 attrId => Attribute) private _attribute;
-    mapping(address tokenContract => bytes32[]) private _tokenAttributes;
+    mapping(bytes32 attrId => Attribute) private _attributes;
+    mapping(bytes32 tokenId => bytes32[] attrId) private _tokenAttributes;
+    mapping(address tokenContract => bytes32[] attrId)
+        private _contractAttributes;
+    mapping(bytes32 tokenId => mapping(bytes32 attrId => uint256))
+        private _values;
 
     error InvalidAttribute(string errMsg, bytes32 attrId);
     error InvalidAttributesArrays(
@@ -36,13 +39,20 @@ contract AttributesRegister {
     function _getAttribute(
         bytes32 attrId
     ) internal view returns (Attribute memory) {
-        return _attribute[attrId];
+        return _attributes[attrId];
     }
 
-    function _getAttriibuteList(
+    function _getAttributeValue(
+        bytes32 tokenId,
+        bytes32 attrId
+    ) internal view returns (uint256) {
+        return _values[tokenId][attrId];
+    }
+
+    function _getAttriibutesList(
         address tokenContract
     ) internal view returns (bytes32[] memory) {
-        return _tokenAttributes[tokenContract];
+        return _contractAttributes[tokenContract];
     }
 
     /**
@@ -67,33 +77,37 @@ contract AttributesRegister {
 
             if (attrs[i].name.length < 1)
                 revert InvalidAttribute(INVALID_NAME, id);
-            if (_attribute[id].signer > address(0))
+            if (_attributes[id].signer > address(0))
                 revert InvalidAttribute(ATTRIBUTE_EXISTS, id);
 
-            _attribute[id] = attrs[i];
+            _attributes[id] = attrs[i];
             attrIds[i] = id;
             names[i] = attrs[i].name;
-            _tokenAttributes[tokenContract].push(id);
+            _contractAttributes[tokenContract].push(id);
         }
 
         return attrIds;
     }
 
     function _setAttribute(
+        bytes32 tokenId,
         bytes32 attrId,
         uint256 value,
         address signer
     ) internal {
-        if (_attribute[attrId].signer == signer)
-            _attribute[attrId].value = value;
-        else {
+        if (_attributes[attrId].signer == signer) {
+            if (_values[tokenId][attrId] == 0) {
+                _tokenAttributes[tokenId].push(attrId);
+            }
+            _values[tokenId][attrId] = value;
+        } else {
             revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }
     }
 
     function _setAttributeOwner(bytes32 attrId, address newSigner) internal {
-        if (_attribute[attrId].signer > address(0))
-            _attribute[attrId].signer = newSigner;
+        if (_attributes[attrId].signer > address(0))
+            _attributes[attrId].signer = newSigner;
         else {
             revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }

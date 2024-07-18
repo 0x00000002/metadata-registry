@@ -45,7 +45,16 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
     function getAttributesList(
         address tokenContract
     ) external view returns (bytes32[] memory attrIds) {
-        return _getAttriibuteList(tokenContract);
+        return _getAttriibutesList(tokenContract);
+    }
+
+    function getAttributeValue(
+        address contractAddress,
+        uint256 tokenId,
+        bytes32 attrId
+    ) external view returns (uint256) {
+        return
+            _getAttributeValue(_getTokenId(contractAddress, tokenId), attrId);
     }
 
     /**
@@ -97,12 +106,19 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
      */
     function setAttributes(bytes memory data, bytes memory signature) external {
         address signer = _sr.validateSignature(data, signature);
-        (bytes32[] memory attrIds, uint256[] memory values) = abi.decode(
-            data,
-            (bytes32[], uint256[])
-        );
+        (
+            address contractAddress,
+            uint256 tokenId,
+            bytes32[] memory attrIds,
+            uint256[] memory values
+        ) = abi.decode(data, (address, uint256, bytes32[], uint256[]));
 
-        _setAttributes(attrIds, values, signer);
+        _setAttributes(
+            _getTokenId(contractAddress, tokenId),
+            attrIds,
+            values,
+            signer
+        );
     }
 
     /**
@@ -112,11 +128,17 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
      * @dev Can be called only by pre-approved accounts (studios/creators)
      */
     function setAttributes(
+        address contractAddress,
+        uint256 tokenId,
         bytes32[] calldata attrIds,
         uint256[] calldata values
     ) external restricted {
-        address signer = _sr.getSigner(msg.sender);
-        _setAttributes(attrIds, values, signer);
+        _setAttributes(
+            _getTokenId(contractAddress, tokenId),
+            attrIds,
+            values,
+            _sr.getSigner(msg.sender)
+        );
     }
 
     /**
@@ -198,6 +220,7 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
      * @param values Array of attribute values
      */
     function _setAttributes(
+        bytes32 tokenId,
         bytes32[] memory attrIds,
         uint256[] memory values,
         address signer
@@ -210,7 +233,20 @@ contract MetadataRegistry is AttributesRegister, URIsRegister, AccessManaged {
                 values.length
             );
         for (uint256 i = 0; i < total; i++) {
-            _setAttribute(attrIds[i], values[i], signer);
+            _setAttribute(tokenId, attrIds[i], values[i], signer);
         }
+    }
+
+    /**
+     * @notice This function generates a unique MetadataRegistry's token ID
+     * @param contractAddress The address of the contract
+     * @param tokenId The contract's identifier for the token (uint256)
+     * @return tokenId The unique, MetadataRegistry's token ID (bytes32)
+     */
+    function _getTokenId(
+        address contractAddress,
+        uint256 tokenId
+    ) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(contractAddress, tokenId));
     }
 }
