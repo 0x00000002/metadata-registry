@@ -8,6 +8,7 @@ import "../src/examples/NFT.sol";
 import "../src/MetadataRegistry.sol";
 import "../src/AttributesRegister.sol";
 import "../src/utils/AccessManagedRoles.sol";
+import "../src/utils/Base32Encoder.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -18,7 +19,7 @@ bytes32 constant digest = sha256("tknff");
 /**
  * @dev Tests for the ASM The Next Legend - Character contract
  */
-contract MRTest is Test {
+contract MRTest is Base32Encoder, Test {
     // Naming convention: contracts variables ends with _, e.g.: nft_ or am_,
     // and their addresses starts with `a`, e.g.: aNft or aManager
 
@@ -104,9 +105,19 @@ contract MRTest is Test {
         aNft = address(nft_);
     }
 
-    function test_smthg() public {
-        vm.startPrank(admin);
+    function test_addURI() public {
+        vm.prank(admin);
         mr_.addURI(aNft, 1, label, digest);
-        console.log(mr_.tokenURI(aNft, 1, label));
+
+        string memory uri = mr_.tokenURI(aNft, 1, label);
+
+        assertEq(uri, "ipfs://QmX9qyMvfYRfho16oYNDZbwHyrGRJPgZWxHX2PcqMkbs9M");
+    }
+
+    function test_smthg() public view {
+        bytes
+            memory data = "6E6FF7950A36187A801613426E858DCE686CD7D7E3C0FC42EE0330072D245C95";
+        string memory encoded = encode(data);
+        console.log(encoded);
     }
 }
