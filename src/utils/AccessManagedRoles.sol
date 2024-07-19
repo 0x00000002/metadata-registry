@@ -3,7 +3,7 @@
 pragma solidity 0.8.26;
 
 /**
- * @dev Futureverse Swappable - Roles for testing Access Managed contract
+ * @dev Futureverse - Roles for testing Access Managed contract
  */
 
 uint64 constant ADMIN_ROLE = type(uint64).min; // the same as in AccessManager.sol

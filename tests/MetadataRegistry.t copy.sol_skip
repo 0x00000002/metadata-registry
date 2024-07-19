@@ -168,7 +168,7 @@ contract NFT_Test is Test {
     function setupSignersRegister() internal {
         vm.startPrank(admin);
         sr_ = new SignersRegister(aManager);
-        aRegister = address(sr_);
+        sRegister = address(sr_);
 
         sr_.setSigner(aStudio_1, studio_1_signer, true);
         sr_.setSigner(aStudio_2, studio_2_signer, true);

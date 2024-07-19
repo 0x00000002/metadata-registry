@@ -8,7 +8,7 @@ import "./IERC4906.sol";
 // import "forge-std/console.sol";
 
 /**
- * @dev Futureverse Swappable - An example of ERC721 IMintable contract
+ * @dev Futureverse - An example of ERC721 contract
  */
 contract NFT is IERC4906, ERC721 {
     constructor(
