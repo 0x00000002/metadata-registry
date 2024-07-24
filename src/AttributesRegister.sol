@@ -9,6 +9,8 @@ string constant ID_VALUES_MISMATCH = "Attr IDs/values length mismatch";
 string constant WRONG_ATTRIBUTE_OWNER = "Wrong attribute owner";
 string constant ARRAYS_LENGTHS_MISMATCH = "Array lengths mismatch";
 
+import "forge-std/console.sol"; // TODO: remove it
+
 contract AttributesRegister {
     /**
      * @notice Each Attribute has its ID,
@@ -24,7 +26,7 @@ contract AttributesRegister {
     mapping(bytes32 attrId => Attribute) private _attributes;
     mapping(bytes32 mrTokenId => bytes32[] attrId) private _tokenAttributes;
     mapping(address tokenContract => bytes32[] attrId)
-        internal __contractAttributes;
+        internal _contractAttributes;
     mapping(bytes32 mrTokenId => mapping(bytes32 attrId => uint256))
         private _values;
 
@@ -51,7 +53,7 @@ contract AttributesRegister {
     function _getAttriibutesList(
         address tokenContract
     ) internal view returns (bytes32[] memory) {
-        return __contractAttributes[tokenContract];
+        return _contractAttributes[tokenContract];
     }
 
     /**
@@ -82,7 +84,7 @@ contract AttributesRegister {
             _attributes[id] = attrs[i];
             attrIds[i] = id;
             names[i] = attrs[i].name;
-            __contractAttributes[tokenContract].push(id);
+            _contractAttributes[tokenContract].push(id);
         }
 
         return attrIds;
@@ -100,7 +102,7 @@ contract AttributesRegister {
             }
             _values[mrTokenId][attrId] = value;
         } else {
-            revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
+            revert InvalidAttribute(WRONG_ATTRIBUTE_OWNER, attrId);
         }
     }
 

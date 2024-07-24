@@ -19,7 +19,7 @@ contract SignersRegister is Cryptography, AccessManaged {
 
     constructor(address manager) AccessManaged(manager) {}
 
-    function getSigner(address acc) external view returns (address) {
+    function getSigner(address acc) public view returns (address) {
         return _signers[acc];
     }
 

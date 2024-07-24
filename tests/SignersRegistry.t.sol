@@ -34,7 +34,6 @@ contract MRTest is Test {
     address user;
     address admin;
     address studio;
-    address someContractAddress;
     address signer;
     uint256 signerPK;
 

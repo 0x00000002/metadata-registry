@@ -134,12 +134,12 @@ contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
      * @param values Array of attribute values
      * @dev Can be called only by pre-approved accounts (studios/creators)
      */
-    function setAttributes(
+    function forceAttributes(
         address contractAddress,
         uint256 tokenId,
         bytes32[] calldata attrIds,
         uint256[] calldata values
-    ) external restricted {
+    ) public restricted {
         _setAttributes(
             _getMRTokenId(contractAddress, tokenId),
             attrIds,
