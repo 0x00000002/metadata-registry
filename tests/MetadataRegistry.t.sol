@@ -84,7 +84,7 @@ contract MRTest is Test {
         sr_ = new SignersRegister(aManager);
         aSignersRegistry = address(sr_);
 
-        sr_.setSigner(studio, signer, true);
+        sr_.setSigner(signer, true);
 
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = sr_.setSigner.selector;

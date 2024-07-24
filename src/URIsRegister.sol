@@ -20,30 +20,30 @@ contract URIsRegister is IPFS {
      * @notice Labels are used by creators to "mark" their URIs.
      * @notice Label is an arbitrary bytes32 value.
      *
-     * @dev MRTokenId = keccak256(contractAddress,tokenId)
+     * @dev mrTokenId = keccak256(contractAddress,tokenId)
      * @dev digest = keccak256(token,label)
      * @dev uri = 'ipfs://' + cidv0(digest)
      *
      * @notice we use bytes32 over the string to save gas
      */
 
-    mapping(bytes32 MRTokenId => mapping(bytes32 label => bytes32))
+    mapping(bytes32 mrTokenId => mapping(bytes32 label => bytes32))
         private _digest;
     mapping(address contractAddress => bytes32[]) private _labels;
 
     /**
      * @notice Get all token uris associated with a particular token
-     * @param MRTokenId The identifier for the token
+     * @param mrTokenId The identifier for the token
      * @param label The identifier for the uri
      * @return uri string
      */
     function _getURI(
-        bytes32 MRTokenId,
+        bytes32 mrTokenId,
         bytes32 label
     ) internal view returns (string memory) {
         return
             string(
-                abi.encodePacked(IPFS_URI, cidv1(_digest[MRTokenId][label]))
+                abi.encodePacked(IPFS_URI, cidv1(_digest[mrTokenId][label]))
             );
     }
 
@@ -74,18 +74,18 @@ contract URIsRegister is IPFS {
 
     /**
      * @notice This function sets the URI for a given token.
-     * @param MRTokenId The identifier for the token
+     * @param mrTokenId The identifier for the token
      * @param label The identifier for the uri
      * @param digest The IPFS digest (sha2-256 hash) of the file
      * @dev Can be called only by pre-approved accounts (studios/creators)
      */
     function _setUri(
-        bytes32 MRTokenId,
+        bytes32 mrTokenId,
         bytes32 label,
         bytes32 digest
     ) internal {
-        if (_digest[MRTokenId][label] > 0) revert UriExists(MRTokenId, label);
+        if (_digest[mrTokenId][label] > 0) revert UriExists(mrTokenId, label);
 
-        _digest[MRTokenId][label] = digest;
+        _digest[mrTokenId][label] = digest;
     }
 }

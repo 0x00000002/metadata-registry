@@ -10,8 +10,12 @@ import "./URIsRegister.sol";
 
 import "forge-std/console.sol"; // TODO: remove it
 
+error InvalidNonce(uint256 nonce);
+
 contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
     SignersRegister private _sr;
+
+    mapping(bytes32 mrTokenId => uint256 nonce) private _nonces;
 
     constructor(address manager_, address register_) AccessManaged(manager_) {
         _sr = SignersRegister(register_);
@@ -109,16 +113,19 @@ contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
         (
             address contractAddress,
             uint256 tokenId,
+            uint256 nonce,
             bytes32[] memory attrIds,
             uint256[] memory values
-        ) = abi.decode(data, (address, uint256, bytes32[], uint256[]));
+        ) = abi.decode(data, (address, uint256, uint256, bytes32[], uint256[]));
 
-        _setAttributes(
-            _getMRTokenId(contractAddress, tokenId),
-            attrIds,
-            values,
-            signer
-        );
+        bytes32 mrTokenId = _getMRTokenId(contractAddress, tokenId);
+
+        if (nonce > _nonces[mrTokenId]) {
+            _nonces[mrTokenId] = nonce;
+            _setAttributes(mrTokenId, attrIds, values, signer);
+        } else {
+            revert InvalidNonce(nonce);
+        }
     }
 
     /**

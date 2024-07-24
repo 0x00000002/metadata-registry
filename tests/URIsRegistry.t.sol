@@ -34,9 +34,13 @@ contract MRTest is Test {
     address user;
     address admin;
     address studio;
-    address someContractAddress;
     address signer;
+    address someContractAddress;
+
     uint256 signerPK;
+
+    bool isTrue;
+    bool isClosed;
 
     event BytesEvent(bytes hash);
     event Bytes32Event(bytes32 hash);
@@ -71,7 +75,7 @@ contract MRTest is Test {
         vm.label(signer, "SIGNER");
     }
 
-    // AcessManager contract must be pre-deployed on both Porcini and ROOT chains,
+    // AcessManager contract is deployed on both Porcini and ROOT chains,
     // this setup recreates the roles of the real AccessManager contract
     function setupAccessManager() internal {
         am_ = new AccessManager(admin);
@@ -156,6 +160,40 @@ contract MRTest is Test {
         assertEq(signer_, signer);
 
         sr_.validateSignature(data, signature);
+    }
+
+    function test_encodePayloads() internal {
+        vm.skip(false);
+
+        bytes32[] memory ids = new bytes32[](2);
+        uint256[] memory values = new uint256[](2);
+
+        ids[0] = keccak256("attr1");
+        ids[1] = keccak256("attr2");
+        values[0] = 1;
+        values[1] = 2;
+
+        bytes memory data = abi.encode(
+            someContractAddress,
+            0, // token id (in contract)
+            ids,
+            values
+        );
+
+        delete ids; // cleanup
+        delete values; // cleanup
+
+        ids[0] = keccak256("attr3");
+        ids[1] = keccak256("attr4");
+        values[0] = 3;
+        values[1] = 4;
+
+        bytes memory dataWithExistingAttribute = abi.encode(
+            someContractAddress,
+            0, // token id (in contract)
+            ids,
+            values
+        );
     }
 
     /** ----------------------------------

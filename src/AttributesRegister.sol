@@ -22,10 +22,10 @@ contract AttributesRegister {
     }
 
     mapping(bytes32 attrId => Attribute) private _attributes;
-    mapping(bytes32 MRTokenId => bytes32[] attrId) private _tokenAttributes;
+    mapping(bytes32 mrTokenId => bytes32[] attrId) private _tokenAttributes;
     mapping(address tokenContract => bytes32[] attrId)
         internal __contractAttributes;
-    mapping(bytes32 MRTokenId => mapping(bytes32 attrId => uint256))
+    mapping(bytes32 mrTokenId => mapping(bytes32 attrId => uint256))
         private _values;
 
     error InvalidAttribute(string errMsg, bytes32 attrId);
@@ -42,10 +42,10 @@ contract AttributesRegister {
     }
 
     function _getAttributeValue(
-        bytes32 MRTokenId,
+        bytes32 mrTokenId,
         bytes32 attrId
     ) internal view returns (uint256) {
-        return _values[MRTokenId][attrId];
+        return _values[mrTokenId][attrId];
     }
 
     function _getAttriibutesList(
@@ -89,16 +89,16 @@ contract AttributesRegister {
     }
 
     function _setAttribute(
-        bytes32 MRTokenId,
+        bytes32 mrTokenId,
         bytes32 attrId,
         uint256 value,
         address signer
     ) internal {
         if (_attributes[attrId].signer == signer) {
-            if (_values[MRTokenId][attrId] == 0) {
-                _tokenAttributes[MRTokenId].push(attrId);
+            if (_values[mrTokenId][attrId] == 0) {
+                _tokenAttributes[mrTokenId].push(attrId);
             }
-            _values[MRTokenId][attrId] = value;
+            _values[mrTokenId][attrId] = value;
         } else {
             revert InvalidAttribute(ATTRIBUTE_NOT_EXIST, attrId);
         }

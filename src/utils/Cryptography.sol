@@ -34,54 +34,12 @@ contract Cryptography {
         bytes calldata data,
         bytes calldata signature
     ) public pure returns (address) {
-        bytes32 messageHash = _hash(data);
-        bytes32 ethSignedMessageHash = _getEthSignedMessageHash(messageHash);
+        bytes32 ethSignedMessageHash = keccak256(
+            abi.encodePacked(
+                "\x19Ethereum Signed Message:\n32",
+                keccak256(data)
+            )
+        );
         return ethSignedMessageHash.recover(signature);
-    }
-
-    /**
-     * @notice Extracts signer from the signed message
-     * @param msgHash The encoded hash used for signature
-     * @param signature The signature passed from the caller
-     * @return signer The address who signed the message
-     */
-    function extractSigner(
-        bytes32 msgHash,
-        bytes calldata signature
-    ) public pure returns (address) {
-        bytes32 ethSignedMessageHash = _getEthSignedMessageHash(msgHash);
-        return ethSignedMessageHash.recover(signature);
-    }
-
-    /**
-     * @notice Encode arguments to generate a hash, which will be used for validating signatures
-     * @dev This function can only be called inside the contract
-     * @param data bytes encoded minting data
-     * @return Encoded hash
-     */
-    function _hash(bytes memory data) private pure returns (bytes32) {
-        return keccak256(abi.encode(data));
-    }
-
-    /**
-     * @notice Prefixing a hash with "\x19Ethereum Signed Message\n", which required for recovering signer
-     * @dev This function can only be called inside the contract
-     * @param _messageHash hash that need to be prefixed
-     * @return Prefixed hash
-     */
-    function _getEthSignedMessageHash(
-        bytes32 _messageHash
-    ) private pure returns (bytes32) {
-        /*
-        Signature is produced by signing a keccak256 hash with the following format:
-        "\x19Ethereum Signed Message\n" + len(msg) + msg
-        */
-        return
-            keccak256(
-                abi.encodePacked(
-                    "\x19Ethereum Signed Message:\n32",
-                    _messageHash
-                )
-            );
     }
 }

@@ -43,12 +43,25 @@ contract SignersRegister is Cryptography, AccessManaged {
 
     /**
      * @notice Update the signer's status
+     * @param signer Signer address
+     * @param status true/false = active/inactive
+     * @dev This function can only be called by Studio admins
+     */
+    function setSigner(address signer, bool status) external restricted {
+        _signers[msg.sender] = signer;
+        _status[signer] = status;
+
+        emit SignerSet(msg.sender, signer, status);
+    }
+
+    /**
+     * @notice Update the signer's status
      * @param acc Studio address to manage signer's status
      * @param signer Signer address
      * @param status true/false = active/inactive
      * @dev This function can only be called by FV admins
      */
-    function setSigner(
+    function setStudioSigner(
         address acc,
         address signer,
         bool status
