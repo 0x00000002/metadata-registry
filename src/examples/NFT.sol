@@ -5,10 +5,8 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./IERC4906.sol";
 
-// import "forge-std/console.sol";
-
 /**
- * @dev Futureverse - An example of ERC721 contract
+ * @dev FutureverAn example of ERC721 contract
  */
 contract NFT is IERC4906, ERC721 {
     constructor(
