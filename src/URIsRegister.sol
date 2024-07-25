@@ -28,8 +28,11 @@ contract URIsRegister is IPFS {
      */
 
     mapping(bytes32 mrTokenId => mapping(bytes32 label => bytes32))
-        private _digest;
-    mapping(address contractAddress => bytes32[]) private _labels;
+        private _digests;
+
+    mapping(address contractAddress => bytes32[]) private _labelsList;
+    mapping(address contractAddress => mapping(bytes32 label => bool))
+        private _labels;
 
     /**
      * @notice Get all token uris associated with a particular token
@@ -43,7 +46,7 @@ contract URIsRegister is IPFS {
     ) internal view returns (string memory) {
         return
             string(
-                abi.encodePacked(IPFS_URI, cidv1(_digest[mrTokenId][label]))
+                abi.encodePacked(IPFS_URI, cidv1(_digests[mrTokenId][label]))
             );
     }
 
@@ -55,7 +58,20 @@ contract URIsRegister is IPFS {
     function _getLabels(
         address contractAddress
     ) internal view returns (bytes32[] memory) {
-        return _labels[contractAddress];
+        return _labelsList[contractAddress];
+    }
+
+    /**
+     * @notice Check if the label exists
+     * @param contractAddress The address of the contract
+     * @param label The identifier for the uri
+     * @return bool
+     */
+    function _labelExists(
+        address contractAddress,
+        bytes32 label
+    ) internal view returns (bool) {
+        return _labels[contractAddress][label];
     }
 
     /**
@@ -64,12 +80,11 @@ contract URIsRegister is IPFS {
      * @param label The identifier for the uri
      */
     function _addLabel(address contractAddress, bytes32 label) internal {
-        for (uint256 i = 0; i < _labels[contractAddress].length; i++) {
-            if (_labels[contractAddress][i] == label) {
-                revert LabelExists(contractAddress, label);
-            }
+        if (_labelExists(contractAddress, label)) {
+            revert LabelExists(contractAddress, label);
         }
-        _labels[contractAddress].push(label);
+        _labelsList[contractAddress].push(label);
+        _labels[contractAddress][label] = true;
     }
 
     /**
@@ -84,8 +99,8 @@ contract URIsRegister is IPFS {
         bytes32 label,
         bytes32 digest
     ) internal {
-        if (_digest[mrTokenId][label] > 0) revert UriExists(mrTokenId, label);
+        if (_digests[mrTokenId][label] > 0) revert UriExists(mrTokenId, label);
 
-        _digest[mrTokenId][label] = digest;
+        _digests[mrTokenId][label] = digest;
     }
 }

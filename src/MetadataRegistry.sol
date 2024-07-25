@@ -8,8 +8,6 @@ import "./SignersRegister.sol";
 import "./AttributesRegister.sol";
 import "./URIsRegister.sol";
 
-import "forge-std/console.sol"; // TODO: remove it
-
 error InvalidNonce(uint256 nonce);
 
 contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
@@ -185,8 +183,7 @@ contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
         uint256 tokenId,
         bytes32 label
     ) external view returns (string memory) {
-        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
-        return _getURI(token, label);
+        return _getURI(_getMRTokenId(contractAddress, tokenId), label);
     }
 
     /**
@@ -202,8 +199,24 @@ contract MetadataRegistry is URIsRegister, AttributesRegister, AccessManaged {
         bytes32 label,
         bytes32 digest
     ) external restricted {
-        bytes32 token = keccak256(abi.encodePacked(contractAddress, tokenId));
-        _setUri(token, label, digest);
+        if (!_labelExists(contractAddress, label)) {
+            _addLabel(contractAddress, label);
+        }
+        _setUri(_getMRTokenId(contractAddress, tokenId), label, digest);
+    }
+
+    /**
+     * @notice Add label
+     * @param contractAddress The address of the contract
+     * @param label The identifier for the uri
+     * @dev Can be called only by pre-approved accounts (studios/creators)
+     */
+
+    function addLabel(
+        address contractAddress,
+        bytes32 label
+    ) external restricted {
+        _addLabel(contractAddress, label);
     }
 
     // ! ----------------- Private functions -----------------

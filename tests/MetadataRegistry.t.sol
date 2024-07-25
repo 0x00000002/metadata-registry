@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import "../src/examples/NFT.sol";
 import "../src/MetadataRegistry.sol";
-import "../src/AttributesRegister.sol";
 import "../src/utils/AccessManagedRoles.sol";
 
 import "forge-std/Test.sol";
@@ -174,11 +173,20 @@ contract MRTest is Test {
         attrs[1] = AttributesRegister.Attribute(staminaAtrrId, signer1);
 
         vm.prank(studio1);
-        bytes32[] memory attrIds = mr_.addAttributes(aNft, attrs);
+        mr_.addAttributes(aNft, attrs);
     }
 
-    function test_addURI() public {
-        // TODO! write more tests, e.g. for restricted access
+    function test_addLabel_happy_path() public {
+        vm.prank(admin);
+        mr_.addLabel(aNft, label);
+    }
+
+    function test_addLabel_error_label_exists() public {
+        vm.prank(admin);
+        mr_.addLabel(aNft, label);
+    }
+
+    function test_addURI_happy_path() public {
         vm.prank(admin);
         mr_.addURI(aNft, 1, label, metatata);
 
@@ -188,6 +196,29 @@ contract MRTest is Test {
             uri,
             "ipfs://bafybeid2tu5agk4p6j2pbfyuwvv2rzpno5xmsy4mumbqng6dumthxmrpmu"
         );
+    }
+
+    function test_addURI_error_uri_exist() public {
+        vm.startPrank(admin);
+        mr_.addURI(aNft, 1, label, metatata);
+        bytes32 mrTokenId = keccak256(abi.encodePacked(aNft, NFT_ID_1));
+        vm.expectRevert(
+            abi.encodeWithSelector(UriExists.selector, mrTokenId, label)
+        );
+
+        mr_.addURI(aNft, 1, label, metatata);
+    }
+
+    function test_addURI_wrong_caller() public {
+        vm.prank(user);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector,
+                user
+            )
+        );
+        mr_.addURI(aNft, 1, label, metatata);
     }
 
     function test_setAttributes_happy_path() public {
@@ -255,8 +286,6 @@ contract MRTest is Test {
         );
 
         bytes memory signature = _sign(payload, signer2PK);
-
-        console.logBytes32(attrIds[0]);
 
         vm.prank(studio2);
         vm.expectRevert(

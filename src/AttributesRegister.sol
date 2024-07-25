@@ -9,8 +9,6 @@ string constant ID_VALUES_MISMATCH = "Attr IDs/values length mismatch";
 string constant WRONG_ATTRIBUTE_OWNER = "Wrong attribute owner";
 string constant ARRAYS_LENGTHS_MISMATCH = "Array lengths mismatch";
 
-import "forge-std/console.sol"; // TODO: remove it
-
 contract AttributesRegister {
     /**
      * @notice Each Attribute has its ID,
